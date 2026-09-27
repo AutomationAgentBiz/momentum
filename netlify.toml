@@ -1,0 +1,10 @@
+# Tells Netlify where the sync function lives.
+[build]
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# The scheduler. Netlify runs this hourly; it decides whether anything is due.
+[functions."notify"]
+  schedule = "@hourly"

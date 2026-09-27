@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!-- Keep this out of search results. The page holds no personal data, but there's
+     no reason for it to be findable by anyone who isn't looking for it. -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="googlebot" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Momentum">
+<meta name="theme-color" content="#0a0d12">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Momentum</title>
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/v53.css">
+</head>
+<body>
+
+<!-- ================= DRAWER ================= -->
+<div class="drawer" id="drawer">
+  <div class="dr-brand">
+    <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>
+    <b>Momentum</b>
+  </div>
+  <div class="askbar" onclick="openAsk()">
+    <div class="ai-orb">✦</div>
+    <div style="flex:1;min-width:0">
+      <b>Ask Momentum</b>
+      <span>Questions, or just tell it what to do</span>
+    </div>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c4b0ff" stroke-width="2.4" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
+  </div>
+  <!-- One search across everything. There was only ever a search box on the
+       Tasks page, so a routine, project or note could not be looked up at all. -->
+  <div class="drsearch">
+    <input class="f" id="navQ" type="search" placeholder="Search tasks, routines, projects, notes…"
+           aria-label="Search everything" oninput="navSearch(this.value)">
+    <div id="navResults"></div>
+  </div>
+  <div class="quickadd">
+    <div class="qa-head">Quick add</div>
+    <div class="qa-btn brain" onclick="openBraindump()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9.5 3.5A3 3 0 0 0 6.6 7 3 3 0 0 0 5 12.5a3 3 0 0 0 1.6 5.4A3 3 0 0 0 12 20V4a3 3 0 0 0-2.5-.5z"/><path d="M14.5 3.5A3 3 0 0 1 17.4 7 3 3 0 0 1 19 12.5a3 3 0 0 1-1.6 5.4A3 3 0 0 1 12 20"/></svg>
+      <div><b>Braindump</b><span>Dump it all, I'll sort it</span></div>
+    </div>
+    <div class="qa-row">
+      <div class="qa-btn sm" onclick="closeAll();openAdd(false)"><b>+ Task</b></div>
+      <div class="qa-btn sm" onclick="closeAll();openAdd(true)"><b>+ Routine</b></div>
+    </div>
+  </div>
+  <div class="nav" id="navList"></div>
+  <div class="dr-foot">Signed in as Pete<br>
+    <span id="drBuild" style="color:#414c5c;font-size:11px"></span></div>
+</div>
+
+<!-- ================= TODAY ================= -->
+<div class="view active" id="view-today">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand">
+        <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>
+        Momentum
+      </div>
+      <h1>Today</h1>
+      <div class="date" id="todayDate"></div>
+    </div>
+    <div class="iconbtn" id="bellBtn" title="Reminders" onclick="bellTap()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      <span class="dot"></span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div id="notifBox"></div>
+    <div id="carryBox"></div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">Today's Progress</span><span class="link" id="dPct">0%</span></div>
+      <div class="card-pad" style="padding-top:0">
+        <div class="prog">
+          <div class="ring">
+            <svg width="78" height="78">
+              <circle cx="39" cy="39" r="32" stroke="#232c39" stroke-width="9" fill="none"/>
+              <circle id="dRing" cx="39" cy="39" r="32" stroke="#12c98a" stroke-width="9" fill="none"
+                      stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201"
+                      style="transition:stroke-dashoffset .5s ease;filter:drop-shadow(0 0 6px rgba(18,201,138,.6))"/>
+            </svg>
+            <div class="val"><b id="dNum">0</b><span id="dOf">of 0</span></div>
+          </div>
+          <div class="legend">
+            <div class="lrow"><i style="background:#12c98a"></i>Completed<b id="dDone">0</b></div>
+            <div class="lrow"><i style="background:#3b4554"></i>Left to do<b id="dLeft">0</b></div>
+            <div class="lrow"><i style="background:#ff7a1a"></i>Routines kept<b id="dRout">0</b></div>
+          </div>
+        </div>
+        <div class="ontrack" id="dMsg"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">Today's Plan</span><span class="link" id="planCount"></span></div>
+      <div class="list" id="taskList"></div>
+    </div>
+
+    <div id="pullBox"></div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">What got in the way</span><span class="link" id="dnLink">Add</span></div>
+      <div class="dn"><div id="dnBox"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">Upcoming Tasks</span><span class="link" onclick="go('calendar')">View all</span></div>
+      <div id="upcoming" style="padding-bottom:12px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">Weekly Progress</span><span class="link">This week</span></div>
+      <div class="card-pad" style="padding-top:0">
+        <div class="prog">
+          <div class="ring">
+            <svg width="78" height="78">
+              <circle cx="39" cy="39" r="32" stroke="#232c39" stroke-width="9" fill="none"/>
+              <circle id="wRing" cx="39" cy="39" r="32" stroke="#3d84ff" stroke-width="9" fill="none"
+                      stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201"
+                      style="transition:stroke-dashoffset .5s ease;filter:drop-shadow(0 0 6px rgba(61,132,255,.6))"/>
+            </svg>
+            <div class="val"><b id="wNum">0</b><span id="wOf">of 0</span></div>
+          </div>
+          <div class="legend">
+            <div class="lrow"><i style="background:#3d84ff"></i>Completed<b id="wDone">0</b></div>
+            <div class="lrow"><i style="background:#3b4554"></i>Pending<b id="wPend">0</b></div>
+          </div>
+        </div>
+        <div class="ontrack" id="wMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="fab" onclick="openAdd()">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    Add Task
+  </button>
+</div>
+
+<!-- ================= TRACKER ================= -->
+<div class="view" id="view-tracker">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand">
+        <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>
+        Momentum
+      </div>
+      <h1>Tracker</h1>
+      <div class="date">Last 5 weeks · log these on Today</div>
+    </div>
+  </div>
+  <div class="wrap" id="trackerBody" style="padding-bottom:110px"></div>
+  <button class="fab" onclick="openTrackerAI()">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l1.9 5.2L19 10l-5.1 1.8L12 17l-1.9-5.2L5 10l5.1-1.8z"/></svg>
+    New Tracker
+  </button>
+</div>
+
+<div class="view" id="view-overview">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>Momentum</div>
+      <h1>Overview</h1><div class="date">The whole picture, one screen</div>
+    </div>
+  </div>
+  <div class="wrap" id="ovBody" style="padding-bottom:50px"></div>
+</div>
+<div class="view" id="view-tasks">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>Momentum</div>
+      <h1>Tasks</h1><div class="date">Every task, filterable</div>
+    </div>
+  </div>
+  <div class="wrap" id="tkBody" style="padding-bottom:50px"></div>
+  <!-- appears only while you're selecting several tasks at once -->
+  <div id="tkBar" class="selbar"></div>
+</div>
+<div class="view" id="view-routines">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>Momentum</div>
+      <h1>Routines</h1><div class="date">Frequency, streaks and history</div>
+    </div>
+  </div>
+  <div class="wrap" id="rtBody" style="padding-bottom:50px"></div>
+</div>
+<div class="view" id="view-notes">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>Momentum</div>
+      <h1>Notes</h1><div class="date">Context you'll need when you come back</div>
+    </div>
+  </div>
+  <div class="wrap" id="ntBody" style="padding-bottom:50px"></div>
+</div>
+<div class="view" id="view-progress">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>Momentum</div>
+      <h1>Progress</h1><div class="date">This week against last</div>
+    </div>
+  </div>
+  <div class="wrap" id="pgBody" style="padding-bottom:50px"></div>
+</div>
+
+<div class="view" id="view-v2">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></div>
+    <div class="titleblock">
+      <div class="brand"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>Momentum</div>
+      <h1>V2 Ideas</h1><div class="date">Parked on purpose, so V1 can ship</div>
+    </div>
+  </div>
+  <div class="wrap" id="v2Body" style="padding-bottom:50px"></div>
+</div>
+
+<div class="view" id="view-settings">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></div>
+    <div class="titleblock">
+      <div class="brand"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>Momentum</div>
+      <h1>Settings</h1><div class="date">Your data, your hours, your targets</div>
+    </div>
+  </div>
+  <div class="wrap" id="stBody" style="padding-bottom:50px"></div>
+</div>
+
+<!-- ================= CALENDAR ================= -->
+<div class="view" id="view-calendar">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand">
+        <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>
+        Momentum
+      </div>
+      <h1 id="calTitle">This week</h1>
+      <div class="date" id="calSub"></div>
+    </div>
+    <div class="iconbtn" onclick="calWeek(-1)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></div>
+    <div class="iconbtn" onclick="calWeek(1)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></div>
+  </div>
+  <div class="wrap" style="display:flex;gap:8px;margin-bottom:4px">
+    <button class="b b-blue" style="flex:1" onclick="planWeek()">✨ Plan my week</button>
+    <button class="b b-violet" style="flex:1" onclick="openCalAssistant()">💬 Talk to it</button>
+  </div>
+  <div class="wrap" id="calBody" style="padding-bottom:50px"></div>
+</div>
+
+<!-- ================= WHY NOT ================= -->
+<div class="view" id="view-whynot">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand">
+        <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>
+        Momentum
+      </div>
+      <h1>Why Not</h1>
+      <div class="date">What slipped, and the reason you gave</div>
+    </div>
+  </div>
+  <div class="wrap" id="wnBody" style="padding-bottom:50px"></div>
+</div>
+
+<!-- ================= CATEGORIES ================= -->
+<div class="view" id="view-categories">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand">
+        <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>
+        Momentum
+      </div>
+      <h1>Categories</h1>
+      <div class="date">Category → Project → Task</div>
+    </div>
+  </div>
+  <div class="wrap" id="catBody" style="padding-bottom:50px"></div>
+</div>
+
+<!-- ================= PROJECTS ================= -->
+<div class="view" id="view-projects">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand">
+        <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>
+        Momentum
+      </div>
+      <h1 id="prTitle">Projects</h1>
+      <div class="date" id="prSub">Grouped by category</div>
+    </div>
+    <div class="iconbtn" id="prBack" style="display:none" onclick="renderProjects()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </div>
+  </div>
+  <div class="wrap" id="prBody" style="padding-bottom:50px"></div>
+</div>
+
+<!-- ================= IMPROVE ================= -->
+<div class="view" id="view-improve">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand">
+        <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>
+        Momentum
+      </div>
+      <h1>Improve This App</h1>
+      <div class="date">Everything you've flagged, grouped by page</div>
+    </div>
+  </div>
+  <div class="wrap" id="impBody" style="padding-bottom:50px"></div>
+</div>
+
+<!-- ================= WORKOUTS ================= -->
+<div class="view" id="view-workouts">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <div class="brand">
+        <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>
+        Momentum
+      </div>
+      <h1 id="wkTitle">Workouts</h1>
+      <div class="date" id="wkSub">Four splits · reps, weight and where you're trending</div>
+    </div>
+    <div class="iconbtn" id="wkBack" style="display:none" onclick="leaveWorkout()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </div>
+  </div>
+  <div class="wrap"><div class="tabs" id="wkTabs"></div></div>
+  <div class="wrap" id="wkBody" style="padding-bottom:60px"></div>
+</div>
+
+<!-- ================= MEALS ================= -->
+<div class="view" id="view-meals">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></div>
+    <div class="titleblock">
+      <div class="brand"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>Momentum</div>
+      <h1>Meals</h1><div class="date">What you ate today and how the week's tracking</div>
+    </div>
+  </div>
+  <div class="wrap" id="mlBody" style="padding-bottom:50px"></div>
+  <input type="file" id="mealFile" accept="image/*" capture="environment"
+         style="display:none" onchange="mealPhotoPicked(this)">
+</div>
+
+<!-- ================= HEALTH ================= -->
+<div class="view" id="view-health">
+  <div class="topbar">
+    <div class="iconbtn" onclick="openDrawer()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></div>
+    <div class="titleblock">
+      <div class="brand"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.1L20.4 10l-6.2 1.9L12 18l-2.2-6.1L3.6 10l6.2-1.9z"/></svg>Momentum</div>
+      <h1>Health</h1><div class="date" id="hlDate">Today at a glance</div>
+    </div>
+  </div>
+  <div class="wrap" id="hlBody" style="padding-bottom:50px"></div>
+</div>
+
+<!-- LOG A HEALTH EVENT -->
+<div class="sheet" id="hlSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad" id="hlSheetBody"></div>
+</div>
+
+<!-- ================= PLANNER ================= -->
+<div class="view" id="view-planner">
+  <div class="pl-bar">
+    <div class="iconbtn" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="titleblock">
+      <h1>Problem Solver</h1>
+      <div class="pl-sub">Idea → Questions → Answers → Prompts
+        <span id="modeBadge" onclick="go('settings')"
+              style="margin-left:6px;padding:2px 6px;border-radius:5px;letter-spacing:.1em;cursor:pointer">CHECKING…</span>
+      </div>
+    </div>
+    <div class="iconbtn" onclick="openSettings()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.5 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1.6a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 3.3 7.5"/></svg>
+    </div>
+    <div class="iconbtn" onclick="resetPlanner()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+    </div>
+  </div>
+
+  <div class="stage" id="stageBar"></div>
+
+  <div id="canvas">
+    <div id="world">
+      <svg id="links"></svg>
+    </div>
+
+    <!-- every plan you've saved, down the left edge, with the one you're on lit up -->
+    <div id="webRail" class="webrail">
+      <div class="railtoggle" onclick="toggleRail()"><span id="railArrow">›</span></div>
+      <div class="railinner" id="railInner"></div>
+    </div>
+
+    <div class="thinking" id="thinking"><span class="spin"></span><span id="thinkTxt">Thinking…</span></div>
+
+    <div class="zoom">
+      <div class="zbtn" onclick="zoomBy(1.25)">+</div>
+      <div class="zbtn" onclick="zoomBy(0.8)">−</div>
+      <div class="zbtn small" onclick="fitView()">FIT</div>
+    </div>
+
+    <button class="pl-cta hidden" id="plCta"></button>
+
+    <div class="savechip" id="webSave" onclick="saveWeb()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+      <span id="webSaveTxt">Save</span>
+    </div>
+    <div class="improve-mini" onclick="openImprove('planner')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l1.9 5.2L19 10l-5.1 1.8L12 17l-1.9-5.2L5 10l5.1-1.8z"/></svg>
+      Improve
+    </div>
+
+    <div class="startwrap" id="startwrap">
+      <div class="startcard">
+        <h3>What's the idea or problem?</h3>
+        <p>Type it raw, or pull something straight out of your app below.</p>
+        <textarea class="f" id="seedInput" rows="3" placeholder="e.g. I want to get more sign installation jobs without paying for ads"></textarea>
+        <div id="startPicks"></div>
+        <div class="btns">
+          <button class="b b-blue" onclick="startWeb()">Build the web</button>
+        </div>
+        <!-- Two ways in that don't need the AI at all: lay it out yourself, or
+             paste one you worked out in a conversation somewhere else. -->
+        <div class="btns" style="margin-top:9px">
+          <button class="b b-ghost" onclick="startBlankWeb()">Build it myself</button>
+          <button class="b b-violet" onclick="openPasteWeb()">Paste from a chat</button>
+        </div>
+      </div>
+      <div class="startcard" id="savedWebsCard" style="margin-top:12px;display:none">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)">
+            Webs you saved</div>
+          <span id="savedWebsCount" style="font-size:10px;font-weight:900;color:#c4b0ff"></span>
+        </div>
+        <div id="savedWebsList" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sits above everything until the right PIN goes in. Hidden by default so a
+     browser with no PIN set never sees it. -->
+<div id="lockScreen" style="display:none">
+  <div class="lockbox">
+    <div class="lockdot">🔒</div>
+    <h2>Momentum</h2>
+    <p id="lockMsg">Enter your PIN</p>
+    <div class="pindots" id="pinDots"></div>
+    <div class="pinpad" id="pinPad"></div>
+    <div class="lockhint">Forgotten it? The only way back in is Erase and restore from a backup.</div>
+  </div>
+</div>
+<div class="scrim" id="scrim" onclick="closeAll()"></div>
+
+<div class="sheet" id="detail"><div class="handle"></div><div class="sheet-pad" id="detailBody"></div></div>
+<div class="sheet" id="node"><div class="handle"></div><div class="sheet-pad" id="nodeBody"></div></div>
+
+<!-- EDIT ROUTINE / TRACKER -->
+<div class="sheet" id="editRoutine">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2 id="erTitle">Edit</h2>
+    <label class="f">Name</label>
+    <input class="f" id="erName">
+    <div id="erFreqBox">
+      <div class="two">
+        <div><label class="f">How many a day</label><input class="f" id="erTarget" type="number" min="1" max="50"></div>
+        <div><label class="f">Call each one a…</label><input class="f" id="erUnit" placeholder="glass"></div>
+      </div>
+      <label class="f">Which days</label>
+      <select class="f" id="erFreq"></select>
+    </div>
+    <label class="f">Category</label>
+    <select class="f" id="erCat"></select>
+    <div class="two">
+      <div><label class="f">Time</label><input class="f" id="erTime" type="time"></div>
+      <div><label class="f">Est. minutes</label><input class="f" id="erEst" type="number" min="0" step="5"></div>
+    </div>
+    <label class="f">Notes</label>
+    <textarea class="f" id="erNotes" rows="2"></textarea>
+    <div style="margin-top:12px;padding:11px;border-radius:11px;background:rgba(18,201,138,.09);
+                border:1px solid rgba(18,201,138,.3);font-size:12.5px;line-height:1.5;color:#9fe8c9">
+      🔒 <span id="erKeep"></span>
+    </div>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-primary" onclick="saveRoutineEdit()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI TRACKER BUILDER -->
+<div class="sheet" id="trackerAI">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Build a tracker</h2>
+    <p style="font-size:12px;color:var(--ink3);line-height:1.5;margin:4px 0 0">
+      Describe it roughly and I'll fill in the rest, asking only about what I still need.</p>
+    <div class="chat" id="tbChat"></div>
+    <div class="chatbar">
+      <textarea class="f" id="tbInput" rows="2" placeholder="e.g. I want to drink 10 glasses of water a day"></textarea>
+      <button class="sendb" onclick="tbSend()">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+    <div class="btns" style="margin-top:9px">
+      <button class="b b-ghost" style="width:100%" onclick="closeAll();openAdd(true)">Skip the chat — fill the form myself</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT A WORKOUT -->
+<div class="sheet" id="editWorkout">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2 id="ewTitle">Edit workout</h2>
+    <div class="two">
+      <div style="flex:3"><label class="f">Name</label><input class="f" id="ewName"></div>
+      <div style="flex:1"><label class="f">Icon</label><input class="f" id="ewIcon" style="text-align:center"></div>
+    </div>
+    <label class="f">Which days</label>
+    <div class="chips" id="ewDays"></div>
+    <label class="f">Rounds — how many times through the whole list</label>
+    <input class="f" id="ewRounds" type="number" inputmode="numeric" min="1" max="5" value="1">
+    <label class="f">The moves — arrows reorder them, the middle box is your usual reps</label>
+    <div id="ewRows"></div>
+    <button class="b b-ghost" style="width:100%" onclick="addEwRow()">+ Another move</button>
+    <div style="margin-top:12px;padding:11px;border-radius:11px;background:rgba(18,201,138,.09);
+                border:1px solid rgba(18,201,138,.3);font-size:12.5px;line-height:1.5;color:#9fe8c9">
+      🔒 <span id="ewKeep"></span>
+    </div>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-primary" onclick="saveWorkoutEdit()">Save changes</button>
+    </div>
+    <div class="btns" style="margin-top:9px">
+      <button class="b b-danger" style="width:100%" onclick="deleteWorkout()">Delete this workout</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASK ABOUT A ROUTE -->
+<div class="sheet" id="threadSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <div class="nlabel" style="color:#4fc3f7;font-size:10px" id="thWhat"></div>
+    <h2 id="thTitle">Ask about this</h2>
+    <p style="font-size:12px;color:var(--ink3);line-height:1.5;margin:6px 0 0">
+      It already knows your problem, your answers and this route — just ask.</p>
+    <div id="thBody" style="margin-top:14px;max-height:46vh;overflow:auto"></div>
+    <label class="f" style="margin-top:14px">Your question</label>
+    <textarea class="f" id="thInput" rows="2" placeholder="e.g. why flyers before calling?"></textarea>
+    <div class="btns">
+      <button class="b b-ghost" onclick="showThreadExport(askingAbout)">Copy for another AI</button>
+      <button class="b b-primary" onclick="thAsk()">Ask</button>
+    </div>
+    <div class="btns" style="margin-top:9px">
+      <button class="b b-ghost" style="width:100%" onclick="closeAll()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- PULL FROM THE APP -->
+<div class="sheet" id="pickSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Pull from your app</h2>
+    <p style="font-size:12px;color:var(--ink3);line-height:1.5;margin:4px 0 12px">
+      Tap anything to add it. Pick several and they get combined into one problem.</p>
+    <div id="pkBody"></div>
+  </div>
+</div>
+
+<!-- ADD MORE CONTEXT -->
+<div class="sheet" id="ctxSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Add more context</h2>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.5;margin:5px 0 0">
+      Something it missed about <b id="acWhat" style="color:#c4b0ff"></b>. It joins the web and feeds into the prompts.</p>
+    <label class="f">What it should know</label>
+    <textarea class="f" id="acText" rows="4" placeholder="e.g. I already tried this in March and the supplier wouldn't quote under 500 units"></textarea>
+    <div class="btns">
+      <button class="b b-ghost" onclick="saveContext(false)">Add to web</button>
+      <button class="b b-blue" onclick="saveContext(true)">Add + save as note</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTE EDITOR -->
+<div class="sheet" id="noteSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2 id="neTitle">New note</h2>
+    <label class="f">The note</label>
+    <textarea class="f" id="neText" rows="4" placeholder="Where you left off, a decision you made, a blocker, context you'll forget…"></textarea>
+    <label class="f">Attach it to</label>
+    <select class="f" id="neAttach"></select>
+    <div class="switchrow">
+      <div><div class="t">Make this the resume point</div><div class="s">Shows at the top when you come back to it</div></div>
+      <div class="sw" id="nePin" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-blue" onclick="saveNote()">Save note</button>
+    </div>
+    <div class="btns" style="margin-top:9px">
+      <button class="b b-danger" id="neDel" style="width:100%;display:none" onclick="delNote()">Delete note</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESUME HERE -->
+<div class="sheet" id="resumeSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2 id="rsTitle">Where you left off</h2>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.5;margin:5px 0 0" id="rsWhat"></p>
+    <label class="f">Pick up here next time</label>
+    <textarea class="f" id="rsText" rows="3" placeholder="e.g. Finished Denver locations; continue with Lakewood"></textarea>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-primary" onclick="saveResume()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEEKLY AI REVIEW -->
+<div class="sheet" id="weekReview">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Your week, reviewed</h2>
+    <div id="wrBody"></div>
+    <div class="btns">
+      <button class="b b-danger" onclick="closeAll()">Cancel</button>
+      <button class="b b-ghost" onclick="closeAll();weekOffset=1;go('calendar');openCalAssistant()">Adjust</button>
+      <button class="b b-primary" onclick="applyReview()">Plan next week</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEEK PLAN PROPOSAL -->
+<div class="sheet" id="weekPlan">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Proposed week</h2>
+    <div id="wpBody"></div>
+    <div class="btns">
+      <button class="b b-danger" onclick="planDraft=null;closeAll()">Cancel</button>
+      <button class="b b-ghost" onclick="closeAll();openCalAssistant()">Adjust</button>
+      <button class="b b-primary" onclick="applyPlan()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR TASK MENU -->
+<div class="sheet" id="calMenu"><div class="handle"></div><div class="sheet-pad" id="cmBody"></div></div>
+
+<!-- TALK TO MY CALENDAR -->
+<div class="sheet" id="calAsk">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Talk to your calendar</h2>
+    <p style="font-size:12px;color:var(--ink3);line-height:1.5;margin:4px 0 0">
+      It already knows your week, projects, deadlines, priorities and dependencies. Questions get answered;
+      changes get proposed first.</p>
+    <div class="chat" id="caChat"></div>
+    <div class="qsug" id="caSug">
+      <span onclick="caSuggest(this)">What should I focus on first?</span>
+      <span onclick="caSuggest(this)">Tuesday looks too busy, fix it</span>
+      <span onclick="caSuggest(this)">I have to help my dad Wednesday afternoon</span>
+      <span onclick="caSuggest(this)">I need the routes done before hiring</span>
+      <span onclick="caSuggest(this)">Move low priority stuff to next week</span>
+      <span onclick="caSuggest(this)">How busy is my week?</span>
+    </div>
+    <div class="chatbar">
+      <textarea class="f" id="caInput" rows="2" placeholder="Tell it what changed, or ask why"></textarea>
+      <button class="sendb" onclick="sendCal()">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- END OF DAY REVIEW -->
+<div class="sheet" id="reviewSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <div id="rvBody"></div>
+    <div class="btns" id="rvFoot">
+      <button class="b b-ghost" onclick="reviewStep(-1)">Back</button>
+      <button class="b b-violet" onclick="reviewStep(1)">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMBINED PLAN — APPROVE BEFORE IT BECOMES TASKS -->
+<div class="sheet" id="planSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Your combined plan</h2>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.55;margin:5px 0 0">
+      Parts of each route you picked, blended and put in order. <b style="color:#fff">Nothing is a task yet.</b></p>
+    <div id="plnBody"></div>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Not yet</button>
+      <button class="b b-primary" onclick="approvePlan()">Approve · <span id="plnCount"></span></button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT -->
+<div class="sheet" id="projSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2 id="pjTitle">New project</h2>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.5;margin:5px 0 0">A project is a specific outcome with a finish line.</p>
+    <div class="two">
+      <div style="flex:3"><label class="f">Project name</label><input class="f" id="pjName" placeholder="e.g. Sign Distribution System"></div>
+      <div style="flex:1"><label class="f">Icon</label><input class="f" id="pjIcon" value="📌" style="text-align:center"></div>
+    </div>
+    <div class="two">
+      <div><label class="f">Category</label><select class="f" id="pjCat"></select></div>
+      <div><label class="f">Status</label><select class="f" id="pjStatus"></select></div>
+    </div>
+    <label class="f">Goal — what does done look like?</label>
+    <textarea class="f" id="pjGoal" rows="2" placeholder="e.g. Signs going out on a repeating route without me touching it"></textarea>
+    <label class="f">Notes</label>
+    <textarea class="f" id="pjNotes" rows="2" placeholder="Anything worth remembering about this one"></textarea>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-blue" onclick="saveProject()">Save project</button>
+    </div>
+    <div class="btns" style="margin-top:9px">
+      <button class="b b-danger" id="pjDel" style="width:100%;display:none" onclick="deleteProject()">Delete project — tasks are kept</button>
+    </div>
+  </div>
+</div>
+
+<!-- IN-APP CONFIRM -->
+<div class="sheet" id="confirmSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Just checking</h2>
+    <p id="cfText" style="font-size:14px;color:#cbd6e5;line-height:1.6;margin:10px 0 0"></p>
+    <div class="btns">
+      <button class="b b-ghost" onclick="askDone(false)">Cancel</button>
+      <button class="b b-primary" id="cfOk" onclick="askDone(true)">Yes, do it</button>
+    </div>
+  </div>
+</div>
+
+<!-- IN-APP PROMPT -->
+<div class="sheet" id="promptSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2 id="ptText">Type it in</h2>
+    <textarea class="f" id="ptInput" rows="2" style="margin-top:12px"></textarea>
+    <div class="btns">
+      <button class="b b-ghost" onclick="askTextDone(false)">Cancel</button>
+      <button class="b b-blue" onclick="askTextDone(true)">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASK MOMENTUM -->
+<div class="sheet" id="askSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>✦ Ask Momentum</h2>
+    <p style="font-size:12px;color:var(--ink3);line-height:1.5;margin:4px 0 0">
+      It reads the whole app — your tasks, projects, routines, calendar, streaks and notes. Ask it something, or tell it to do something.</p>
+    <div class="chat" id="askChat"></div>
+    <div class="qsug" id="askSug">
+      <span onclick="askSuggest(this)">What should I do first today?</span>
+      <span onclick="askSuggest(this)">Log a glass of water</span>
+      <span onclick="askSuggest(this)">Add a task to call the tint guy</span>
+      <span onclick="askSuggest(this)">How busy is my week?</span>
+      <span onclick="askSuggest(this)">Open my projects</span>
+      <span onclick="askSuggest(this)">What are my streaks?</span>
+      <span onclick="askSuggest(this)">Plan my week</span>
+      <span onclick="askSuggest(this)">What's still owed?</span>
+    </div>
+    <div class="chatbar">
+      <textarea class="f" id="askInput" rows="2" placeholder="Ask, or tell it what to do"></textarea>
+      <button class="sendb" onclick="sendAsk()">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+    <div class="btns" style="margin-top:9px">
+      <button class="b b-ghost" style="width:100%" onclick="askChat=[];drawAsk()">Clear</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPROVE CHAT -->
+<div class="sheet" id="improveSheet">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2 id="impTitle">Improve</h2>
+    <p style="font-size:12px;color:var(--ink3);line-height:1.5;margin:4px 0 0">
+      Ask about the app, or say what you'd change. Tagged to this page automatically — change requests land in
+      <b style="color:#c4b0ff">Improve This App</b> in the menu.</p>
+    <div class="chat" id="impChat"></div>
+    <div class="qsug" id="impSug">
+      <span onclick="impSuggest(this)">Does the app have a calendar?</span>
+      <span onclick="impSuggest(this)">How do I add a routine?</span>
+      <span onclick="impSuggest(this)">What are my streaks right now?</span>
+      <span onclick="impSuggest(this)">Today's page is getting too long</span>
+      <span onclick="impSuggest(this)">Everything disappears when I refresh</span>
+    </div>
+    <div class="chatbar">
+      <textarea class="f" id="impInput" rows="2" placeholder="What would you change?"></textarea>
+      <button class="sendb" onclick="sendImprove()">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+    <div class="btns"><button class="b b-ghost" onclick="closeAll();go('improve')">See all my notes</button></div>
+  </div>
+</div>
+
+<!-- LOG CARDIO -->
+<div class="sheet" id="cardioAdd">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Log a run</h2>
+    <label class="f">What was it</label>
+    <select class="f" id="cdType"><option>Jog</option><option>Run</option><option>Walk</option><option>Bike</option><option>Hike</option></select>
+    <div class="two">
+      <div><label class="f">Distance (miles)</label><input class="f" id="cdMi" type="number" step="0.1" min="0" placeholder="3.1"></div>
+      <div><label class="f">Time (minutes)</label><input class="f" id="cdMin" type="number" step="1" min="0" placeholder="28"></div>
+    </div>
+    <p style="font-size:12px;color:var(--ink3);margin:10px 0 0">Pace works itself out from those two.</p>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-blue" onclick="saveCardio()">Save run</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG FOOD -->
+<div class="sheet" id="mealAdd">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Log food</h2>
+    <label class="f">Meal</label>
+    <select class="f" id="mlSlot"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select>
+    <label class="f">What was it</label>
+    <input class="f" id="mlName" placeholder="e.g. Chicken bowl">
+    <div class="two">
+      <div><label class="f">Calories</label><input class="f" id="mlKcal" type="number" min="0" placeholder="740"></div>
+      <div><label class="f">Protein (g)</label><input class="f" id="mlP" type="number" min="0" placeholder="52"></div>
+    </div>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-primary" onclick="saveMeal()">Add it</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUILD A WORKOUT -->
+<div class="sheet" id="wkAdd">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Build a workout</h2>
+    <div class="two">
+      <div style="flex:3"><label class="f">Name it</label><input class="f" id="wkName" placeholder="e.g. Grip & Forearms"></div>
+      <div style="flex:1"><label class="f">Icon</label><input class="f" id="wkIcon" value="🏋️" style="text-align:center"></div>
+    </div>
+    <label class="f">Which days</label>
+    <div class="chips" id="wkDays">
+      <span class="chip" onclick="this.classList.toggle('on')">Mon</span>
+      <span class="chip" onclick="this.classList.toggle('on')">Tue</span>
+      <span class="chip" onclick="this.classList.toggle('on')">Wed</span>
+      <span class="chip" onclick="this.classList.toggle('on')">Thu</span>
+      <span class="chip" onclick="this.classList.toggle('on')">Fri</span>
+      <span class="chip" onclick="this.classList.toggle('on')">Sat</span>
+      <span class="chip" onclick="this.classList.toggle('on')">Sun</span>
+    </div>
+    <label class="f">Rounds — how many times through the whole list</label>
+    <input class="f" id="wkRounds" type="number" inputmode="numeric" min="1" max="5" value="1">
+    <label class="f">The moves — arrows reorder them, the middle box is your usual reps</label>
+    <div id="exRows"></div>
+    <button class="b b-ghost" style="width:100%" onclick="addExRow()">+ Another move</button>
+    <p style="font-size:12px;color:var(--ink3);line-height:1.5;margin:12px 0 0">
+      Tap <b>Reps</b> to flip a move to <b>Weight</b> — weighted moves get a lbs box when you're logging.</p>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-blue" onclick="saveWorkout()">Create workout</button>
+    </div>
+  </div>
+</div>
+
+<!-- BRAINDUMP -->
+<div class="sheet" id="braindump">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>Braindump</h2>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.55;margin:6px 0 0">
+      Empty your head. One thing per line, no order, no categories, spelling doesn't matter.
+      I'll sort them into the right buckets.</p>
+    <textarea class="f" id="bdText" rows="8" style="margin-top:14px" placeholder="call the tint guy
+order more black filament
+2 mile run tomorrow
+dispute the experian thing
+fix the bathroom fan
+post in the contractor groups"></textarea>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-violet" onclick="sortDump()">Sort it out</button>
+    </div>
+    <div id="bdResult"></div>
+  </div>
+</div>
+
+<!-- DAY NOTE -->
+<div class="sheet" id="daynote">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2>What got in the way today?</h2>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.55;margin:6px 0 0">
+      Rough day, short day, thrown-off day — write it down. It shows up on the Calendar later so you can see the
+      pattern behind the days you missed.</p>
+    <label class="f">Tap what hit you</label>
+    <div class="blockers" id="blList"></div>
+    <label class="f">In your words</label>
+    <textarea class="f" id="dnText" rows="4" placeholder="e.g. Had to cover a shift, got home at 9 and skipped the workout"></textarea>
+    <div class="btns">
+      <button class="b b-ghost" onclick="clearDayNote()">Clear</button>
+      <button class="b b-blue" onclick="saveDayNote()">Save note</button>
+    </div>
+  </div>
+</div>
+
+<!-- (removed: an old AI panel that was unreachable, had a Save button that saved
+     nothing, and claimed DEMO BRAIN no matter what. Settings is the only place now.) -->
+
+<!-- ADD TASK -->
+<div class="sheet" id="add">
+  <div class="handle"></div>
+  <div class="sheet-pad">
+    <h2 id="addTitle">New task</h2>
+    <label class="f">Task name</label>
+    <input class="f" id="aName" placeholder="e.g. Pull business credit report" oninput="syncSuggest()">
+    <label class="f">Category</label>
+    <select class="f" id="aCat" onchange="syncProjPicker()"></select>
+    <label class="f">Project <span style="text-transform:none;letter-spacing:0;font-weight:500;color:#4c576a">— optional</span></label>
+    <select class="f" id="aProj"></select>
+    <div id="aSuggest" style="display:none;margin-top:8px"></div>
+    <!-- WHEN. The form only ever had a Deadline field, which reads like the day
+         you're doing it but isn't — so every task landed on today whether you
+         meant it to or not, and nothing ever reached the calendar. -->
+    <div id="aWhenBox">
+      <label class="f">When are you doing it</label>
+      <div class="chips" id="aWhenChips"></div>
+      <input class="f" id="aWhenDate" type="date" style="display:none;margin-top:8px" onchange="pickWhen('pick',this.value)">
+    </div>
+    <div class="two">
+      <div><label class="f">Time</label><input class="f" id="aTime" type="time" value="09:00"></div>
+      <div><label class="f">Est. minutes</label><input class="f" id="aEst" type="number" value="30" min="5" step="5"></div>
+    </div>
+    <div class="two">
+      <div><label class="f">Priority</label><select class="f" id="aPri"><option>Must</option><option selected>Should</option><option>Nice</option></select></div>
+      <div><label class="f">Deadline <span style="text-transform:none;letter-spacing:0;font-weight:500;color:#4c576a">— optional</span></label><input class="f" id="aDue" type="date"></div>
+    </div>
+    <label class="f">Notes</label>
+    <textarea class="f" id="aNotes" rows="2" placeholder="Anything you want to remember"></textarea>
+    <div class="switchrow">
+      <div><div class="t">Make it a routine</div><div class="s">Routines build a streak when you keep them up</div></div>
+      <div class="sw" id="aSw" onclick="toggleRoutine()"></div>
+    </div>
+    <div class="switchrow" id="makeupRow">
+      <div><div class="t">Can be made up later</div><div class="s">If you miss it, tomorrow asks if you want to catch up</div></div>
+      <div class="sw on" id="aMakeup" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div id="freqBox" style="display:none">
+      <label class="f">How often</label>
+      <div class="chips" id="freqChips"></div>
+      <div class="two" style="margin-top:4px">
+        <div><label class="f">Times per day</label><input class="f" id="aTarget" type="number" value="1" min="1" max="20" oninput="syncMakeup()"></div>
+        <div><label class="f">Call each one a…</label><input class="f" id="aUnit" placeholder="glass, dose, rep"></div>
+      </div>
+      <p style="font-size:12px;color:var(--ink3);line-height:1.5;margin:8px 0 0">
+        Leave it at <b>1</b> and you get a normal checkbox. Set it to <b>8</b> and you get a counter with 8 taps —
+        and it shows up on the Tracker page.</p>
+    </div>
+    <div class="btns">
+      <button class="b b-ghost" onclick="closeAll()">Cancel</button>
+      <button class="b b-blue" id="addBtn" onclick="saveTask()">Add to today</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+<script src="js/v53.js"></script>
+</body>
+</html>

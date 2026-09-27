@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /
+
+# Personal app. Nothing here is meant to be indexed, crawled or archived.
