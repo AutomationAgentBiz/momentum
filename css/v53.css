@@ -1,0 +1,172 @@
+/* ================= v53 — simpler navigation, AI everywhere =================
+   Loaded after app.css, so anything here wins. */
+
+/* ---- toasts at the top: they used to sit on top of the list and the + button */
+.toast{bottom:auto;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-14px);}
+.toast.on{transform:translateX(-50%) translateY(0);}
+
+/* ---- bottom tab bar ---- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;justify-content:center;
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(12,16,23,.86),#0b0f15 40%);border-top:1px solid #1d2531;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.tabbar .tbin{display:flex;width:100%;max-width:520px;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 4px;cursor:pointer;
+  color:#6b7789;font-size:10.5px;font-weight:800;letter-spacing:.04em;user-select:none;border-radius:12px;}
+.tab svg{width:22px;height:22px;}
+.tab.on{color:#e9eef6;}
+.tab.on svg{color:#7fb0ff;filter:drop-shadow(0 0 6px rgba(61,132,255,.55));}
+.tab.think .orb{width:40px;height:40px;margin-top:-16px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#a78bfa,#6d4ee0);color:#fff;font-size:19px;box-shadow:0 8px 22px rgba(124,92,240,.45);
+  border:2px solid #0b0f15;}
+.tab.think.on .orb{box-shadow:0 0 0 2px rgba(196,176,255,.6),0 8px 22px rgba(124,92,240,.6);}
+.tab:active{background:rgba(255,255,255,.04);}
+
+/* room under every page so the tab bar never covers the last card */
+.view{padding-bottom:calc(84px + env(safe-area-inset-bottom));}
+#view-today{padding-bottom:calc(150px + env(safe-area-inset-bottom));}
+#view-planner.active{bottom:calc(62px + env(safe-area-inset-bottom));padding-bottom:0;}
+
+/* the page-specific floating buttons sit above the tab bar now */
+.fab{bottom:calc(80px + env(safe-area-inset-bottom));}
+
+/* ---- sub-pages inside a tab ---- */
+.subnav{display:flex;gap:5px;overflow-x:auto;padding:0 16px 10px;max-width:460px;margin:0 auto;scrollbar-width:none;}
+.subnav::-webkit-scrollbar{display:none;}
+.subnav span{flex:none;padding:7px 10px;border-radius:999px;background:#151b24;border:1px solid #232c39;
+  font-size:11.5px;font-weight:750;color:var(--ink2);cursor:pointer;white-space:nowrap;}
+.subnav span.on{background:linear-gradient(180deg,#4a8fff,#2c6ae0);border-color:transparent;color:#fff;}
+#view-planner .subnav{padding:0 12px 6px;max-width:none;margin:0;}
+
+/* ---- the one + button ---- */
+.plusfab{position:fixed;left:max(14px,calc(50vw - 250px));bottom:calc(80px + env(safe-area-inset-bottom));z-index:55;
+  width:54px;height:54px;border-radius:18px;border:0;cursor:pointer;display:none;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#4a8fff,#2c6ae0);color:#fff;box-shadow:0 12px 28px rgba(44,106,224,.5);}
+.plusfab.on{display:flex;}
+.plusfab svg{width:24px;height:24px;}
+.pluslist{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px;}
+.plusopt{padding:14px 13px;border-radius:14px;background:#171e29;border:1px solid #2a3442;cursor:pointer;}
+.plusopt b{display:block;font-size:14px;}
+.plusopt span{display:block;font-size:11.5px;color:var(--ink3);margin-top:3px;line-height:1.35;}
+.plusopt .pi{font-size:20px;display:block;margin-bottom:6px;}
+.plusopt:active{transform:scale(.98);}
+.quicklog{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.quicklog span{padding:9px 12px;border-radius:10px;background:#0f1d33;border:1px solid rgba(61,132,255,.35);
+  color:#9cc2ff;font-size:12.5px;font-weight:750;cursor:pointer;}
+
+/* the drawer is now "More": search plus the setup pages */
+.drawer .quickadd{display:none;}
+
+/* ---- Ask Momentum (the Think tab) ---- */
+#view-think .chat{max-height:none;min-height:40vh;padding:12px 14px;}
+.thctx{display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;padding:6px 10px;border-radius:999px;
+  background:rgba(167,139,250,.14);border:1px solid rgba(167,139,250,.4);color:#c4b0ff;font-size:12px;font-weight:750;}
+.thctx i{font-style:normal;cursor:pointer;opacity:.8;}
+.thbar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:50;padding:8px 12px;
+  background:linear-gradient(180deg,rgba(10,13,18,0),#0a0d12 30%);}
+.thbar .in{max-width:460px;margin:0 auto;display:flex;gap:8px;align-items:flex-end;}
+.thbar textarea{flex:1;min-height:46px;max-height:140px;resize:none;}
+#view-think{padding-bottom:calc(150px + env(safe-area-inset-bottom));}
+.actcard{margin:6px 0 10px;padding:10px 12px;border-radius:12px;background:#0f1a14;border:1px solid rgba(18,201,138,.35);
+  font-size:12.5px;color:#bff0dc;display:flex;align-items:center;gap:10px;}
+.actcard.undone{background:#1a1414;border-color:rgba(255,95,126,.3);color:#ffc0c8;}
+.actcard.failed{background:#1c1710;border-color:rgba(255,178,107,.35);color:#ffd6a6;}
+.actcard .at{flex:1;min-width:0;line-height:1.4;}
+.actcard .ab{flex:none;padding:6px 10px;border-radius:8px;font-size:10.5px;font-weight:900;letter-spacing:.08em;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);cursor:pointer;color:#fff;}
+.bub.ai ul{margin:6px 0;padding-left:18px;}
+.thnote{font-size:11.5px;color:var(--ink3);line-height:1.5;margin:4px 2px 12px;}
+
+/* "Ask about this page" at the bottom of every page */
+.askpage{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 15px;border-radius:14px;cursor:pointer;
+  background:linear-gradient(180deg,rgba(167,139,250,.14),rgba(124,92,240,.08));border:1px solid rgba(167,139,250,.38);}
+.askpage .o{width:32px;height:32px;flex:none;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#a78bfa,#6d4ee0);color:#fff;font-size:15px;}
+.askpage b{display:block;font-size:13.5px;color:#e6dcff;}
+.askpage span{display:block;font-size:11.5px;color:#a99bd6;margin-top:2px;}
+
+/* morning / Sunday cards on Today */
+.v53card{display:flex;align-items:center;gap:12px;padding:14px 15px;margin-bottom:12px;border-radius:16px;cursor:pointer;
+  background:linear-gradient(180deg,#1b1a12,#15140e);border:1px solid rgba(255,196,77,.35);}
+.v53card .ic{font-size:22px;}
+.v53card b{display:block;font-size:14px;color:#ffe3a6;}
+.v53card span{display:block;font-size:12px;color:#c9b27f;margin-top:2px;line-height:1.4;}
+.v53card .x{flex:none;color:#8a7a55;padding:4px 6px;font-size:13px;}
+.v53card.violet{background:linear-gradient(180deg,#191628,#131120);border-color:rgba(167,139,250,.4);}
+.v53card.violet b{color:#e6dcff;} .v53card.violet span{color:#a99bd6;}
+
+/* ---- tracker: dates on the squares ---- */
+.gd{display:flex;align-items:center;justify-content:center;}
+.gd span{font-size:9px;font-weight:700;color:rgba(233,238,246,.55);line-height:1;pointer-events:none;}
+.gd.m1 span{font-size:8px;color:#fff;font-weight:900;letter-spacing:.02em;}
+.gspan{padding:0 16px 8px;font-size:11px;color:var(--ink3);font-weight:650;}
+
+/* ---- empty states ---- */
+.v53empty{padding:4px 16px 14px;font-size:12.5px;color:var(--ink3);line-height:1.55;}
+
+/* ---- workouts: rest timer + next weight ---- */
+.restchip{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom));z-index:58;
+  display:none;align-items:center;gap:10px;padding:9px 12px 9px 15px;border-radius:14px;
+  background:#101a2b;border:1px solid rgba(61,132,255,.5);box-shadow:0 12px 30px rgba(0,0,0,.6);}
+.restchip.on{display:flex;}
+.restchip b{font-size:20px;font-variant-numeric:tabular-nums;color:#9cc2ff;min-width:52px;}
+.restchip .rl{font-size:10px;font-weight:900;letter-spacing:.12em;color:#6b87b8;}
+.restchip .rb{padding:6px 9px;border-radius:8px;font-size:11px;font-weight:850;background:#1b2a44;color:#cfe0ff;cursor:pointer;}
+.restchip.done{border-color:rgba(18,201,138,.7);} .restchip.done b{color:#4fd6a5;}
+.nextwt{display:inline-block;margin-left:8px;padding:2px 7px;border-radius:6px;font-size:10.5px;font-weight:800;
+  background:rgba(18,201,138,.14);border:1px solid rgba(18,201,138,.4);color:#4fd6a5;cursor:pointer;}
+
+/* ---- stress picker ---- */
+.stressrow{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:14px;}
+.stressbtn{padding:12px 4px;border-radius:12px;background:#171e29;border:1px solid #2a3442;text-align:center;cursor:pointer;}
+.stressbtn b{display:block;font-size:24px;}
+.stressbtn span{display:block;font-size:10.5px;color:var(--ink3);margin-top:4px;font-weight:700;}
+.stressbtn:active{transform:scale(.96);}
+
+/* ---- Problem Solver: one scroll area, not two inside each other ---- */
+.startcard{max-height:none;overflow:visible;}
+.picklist,.sheet{touch-action:pan-y;}
+.savechip{opacity:.85;}
+
+/* ---- settings AI card ---- */
+.aistat{margin:0 16px 12px;padding:12px;border-radius:11px;font-size:12.5px;line-height:1.55;}
+.aistat.ok{background:rgba(18,201,138,.1);border:1px solid rgba(18,201,138,.35);color:#bff0dc;}
+.aistat.todo{background:rgba(255,178,107,.09);border:1px solid rgba(255,178,107,.35);color:#ffd6a6;}
+.aistat ol{margin:8px 0 0;padding-left:18px;}
+.aistat code{background:#0f141b;border:1px solid #2c374a;border-radius:5px;padding:1px 5px;font-size:11.5px;color:#fff;}
+
+/* ---- wider on a computer ---- */
+@media (min-width:900px){
+  .wrap,.topbar,.subnav{max-width:760px;}
+  .sheet{max-width:600px;}
+  .thbar .in{max-width:760px;}
+  .tabbar .tbin{max-width:640px;}
+  .plusfab{left:calc(50vw - 440px);}
+}
+
+/* ---- Workouts: AI Coach sits in the header row instead of floating over START ---- */
+.coachsq{position:static;width:auto;height:30px;flex-direction:row;gap:6px;padding:0 11px;margin:12px 16px 0 auto;
+  display:inline-flex;float:right;font-size:11px;}
+.coachsq span{font-size:13px;}
+.coachsq + .card-head{padding-right:16px;clear:both;}
+.lg .lm{min-width:0;}
+.lg .crbtn{flex:none;}
+
+/* three buttons in a row (Edit / History / Start) no longer push the page sideways on a phone */
+.wk-row button.b{min-width:0;}
+
+@media (min-width:900px){ #trackerBody .grid, #trackerBody .gdays{max-width:420px;} }
+
+/* ---- Workouts: before / after bars ---- */
+.cmpcard .cmprow{display:flex;align-items:center;gap:10px;padding:4px 16px;}
+.cmpcard .cl{width:74px;flex:none;font-size:12.5px;font-weight:800;color:var(--ink2);line-height:1.15;}
+.cmpcard .cl small{display:block;font-size:10.5px;font-weight:700;color:var(--ink3);}
+.cmpcard .cbar{flex:1;height:14px;border-radius:7px;background:#0f141b;border:1px solid #232c39;position:relative;overflow:visible;}
+.cmpcard .cbar i{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:#3b4554;transition:width .35s ease;}
+.cmpcard .cbar i.now{background:linear-gradient(90deg,#e07820,#ff9d4d);}
+.cmpcard .cbar i.now.win{background:linear-gradient(90deg,#0ea472,#16d494);box-shadow:0 0 10px rgba(22,212,148,.45);}
+.cmpcard .cbar s{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:#e9eef6;border-radius:2px;opacity:.8;}
+.cmpcard .cmprow b{width:52px;flex:none;text-align:right;font-size:17px;font-variant-numeric:tabular-nums;}
+.cmpcard .cmpmsg{padding:10px 16px 4px;font-size:13.5px;color:var(--ink2);line-height:1.5;}
+.cmpcard .cmpmsg b{color:#fff;}
+.cmpcard .cmpfoot{padding:4px 16px 14px;font-size:11px;color:var(--ink3);font-weight:650;}
