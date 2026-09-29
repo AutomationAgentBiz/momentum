@@ -59,7 +59,7 @@ function monthCalendar(){
     const cls = ["mc-cell", did.length||mi ? "did" : "", miss.length && !did.length && !mi ? "miss" : "",
                  key===today ? "today" : "", future ? "future" : ""].filter(Boolean).join(" ");
     const bg = did.length ? `style="background:linear-gradient(160deg,${did[0].fg}33,${did[0].fg}14);border-color:${did[0].fg}88"` :
-               mi ? `style="background:linear-gradient(160deg,#ff5f7e33,#ff5f7e12);border-color:#ff5f7e88"` : "";
+               mi ? `style="background:linear-gradient(160deg,#b58cff33,#b58cff12);border-color:#b58cff88"` : "";
     cells.push(`<div class="${cls}" ${bg} onclick="openWkDay('${key}')">
       <span class="mc-n">${d}</span>
       ${miss.length && !did.length && !mi ? `<span class="mc-x">✕</span>` : ``}
@@ -79,14 +79,14 @@ function monthCalendar(){
     <div class="mc-stats">
       <div><b style="color:#4fd6a5">${trained}</b><span>days trained</span></div>
       <div><b>${sessions}</b><span>workouts</span></div>
-      <div><b style="color:#ff8fa3">${miles?fmtMi(miles).replace("M"," mi"):"0 mi"}</b><span>cardio</span></div>
+      <div><b style="color:#d4bfff">${miles?fmtMi(miles).replace("M"," mi"):"0 mi"}</b><span>cardio</span></div>
       <div><b style="color:${missed?'#ff9d9d':'var(--ink3)'}">${missed}</b><span>missed</span></div>
     </div>
     <div class="mc-dow">${DOW.map(d=>`<span>${d[0]}</span>`).join("")}</div>
     <div class="mc-grid">${cells.join("")}</div>
     <div class="mc-key">
       ${WK.map(w=>`<span><i style="background:${w.fg}"></i>${esc(w.name)}</span>`).join("")}
-      <span><i style="background:#ff5f7e"></i>Cardio (miles)</span>
+      <span><i style="background:#b58cff"></i>Cardio (miles)</span>
       <span><em class="kx">✕</em>Missed</span>
     </div>
     ${streak>1 ? `<div class="mc-streak">🔥 ${streak} weeks in a row with every workout done</div>` : ``}
@@ -129,7 +129,7 @@ window.openWkDay = function(key){
   $id("nodeBody").innerHTML = `
     <h2>${shortDate(key)}</h2>
     ${did.map(sessHTML).join("")}
-    ${runs.map(c=>{ const t=CTYPE[c.type]||{i:"🏃",c:"#ff5f7e"};
+    ${runs.map(c=>{ const t=CTYPE[c.type]||{i:"🏃",c:"#b58cff"};
       return `<div class="dd-card" style="border-color:${t.c}66" onclick="closeAll();openRun(${c.id})">
         <div class="dd-top"><span class="dd-ic" style="background:${t.c}22">${t.i}</span><b>${esc(c.type)}</b>
         <span class="dd-sum" style="color:${t.c}">${fmtMi(c.mi)} · ${c.min} min</span></div>
@@ -174,7 +174,7 @@ monthGrid = function(w, offset){
   return `<div class="mgrid wg">
     <div class="mgrid-head"><span class="mg-month">${m0.toLocaleDateString(undefined,{month:"long"})}</span>
       <span class="mg-count" style="color:${count?w.fg:'var(--ink3)'}">${count} <em>session${count===1?"":"s"}</em></span></div>
-    <div class="wg-row wg-dow">${DOW.map(d=>`<span>${d[0]}</span>`).join("")}<span></span></div>
+    <div class="wg-row wg-dow">${DOW.map(d=>`<span>${d[0]}</span>`).join("")}<span class="wkh">week</span></div>
     ${rows.map(wk=>`<div class="wg-row">${wk.map(cell).join("")}${weekTick(wk)}</div>`).join("")}
     <div class="mg-key"><span><i style="background:${w.fg};border-color:${w.fg}"></i>Done</span>
       <span><em class="kx">✕</em>Missed</span><span><i style="border-color:${w.fg}88;border-style:dashed"></i>Coming up</span>
@@ -196,13 +196,13 @@ function cardioGrid(){
   }
   if(week.length){ while(week.length<7) week.push(null); rows.push(week); }
   const cell = c => !c ? `<div class="wg-cell empty"></div>`
-    : `<div class="wg-cell ${c.m?"did":"off"}${c.today?" today":""}" ${c.m?`style="background:#ff5f7e;border-color:#ff5f7e;box-shadow:0 0 8px #ff5f7e55"`:""} onclick="openWkDay('${c.key}')">
+    : `<div class="wg-cell ${c.m?"did":"off"}${c.today?" today":""}" ${c.m?`style="background:#b58cff;border-color:#b58cff;box-shadow:0 0 8px #b58cff55"`:""} onclick="openWkDay('${c.key}')">
         ${c.m?`<span class="wg-mi">${fmtMi(c.m)}</span>`:`<span class="wg-n">${c.d}</span>`}</div>`;
-  const weekMi = wk => { const n=wk.reduce((a,c)=>a+(c&&c.m||0),0); return n?`<span class="wtick part" style="color:#ff8fa3">${fmtMi(n)}</span>`:`<span class="wtick"></span>`; };
+  const weekMi = wk => { const n=wk.reduce((a,c)=>a+(c&&c.m||0),0); return n?`<span class="wtick part" style="color:#d4bfff">${fmtMi(n)}</span>`:`<span class="wtick"></span>`; };
   return {days, mi, html:`<div class="mgrid wg">
     <div class="mgrid-head"><span class="mg-month">${m0.toLocaleDateString(undefined,{month:"long"})}</span>
-      <span class="mg-count" style="color:${days?'#ff8fa3':'var(--ink3)'}">${days} <em>day${days===1?"":"s"} · ${fmtMi(mi).replace("M"," mi")}</em></span></div>
-    <div class="wg-row wg-dow">${DOW.map(d=>`<span>${d[0]}</span>`).join("")}<span></span></div>
+      <span class="mg-count" style="color:${days?'#d4bfff':'var(--ink3)'}">${days} <em>day${days===1?"":"s"} · ${fmtMi(mi).replace("M"," mi")}</em></span></div>
+    <div class="wg-row wg-dow">${DOW.map(d=>`<span>${d[0]}</span>`).join("")}<span class="wkh">week</span></div>
     ${rows.map(wk=>`<div class="wg-row">${wk.map(cell).join("")}${weekMi(wk)}</div>`).join("")}
   </div>`};
 }
@@ -212,15 +212,15 @@ function cardioCard(){
   const last = [...cardio].sort((a,b)=>String(b.d||"").localeCompare(String(a.d||"")))[0];
   return `<div class="card wk" id="cardioCard">
     <div class="wk-head">
-      <div class="icon" style="background:#2a1119">🏃</div>
-      <div class="wk-t"><b>Cardio</b><span style="color:#ff5f7e">Jogs, runs, walks, rides · ${fmtMi(wkMi).replace("M"," mi")} this week</span></div>
+      <div class="icon" style="background:#1f1733">🏃</div>
+      <div class="wk-t"><b>Cardio</b><span style="color:#b58cff">Jogs, runs, walks, rides · ${fmtMi(wkMi).replace("M"," mi")} this week</span></div>
       <div style="text-align:right"><div style="font-size:13px;font-weight:800;color:var(--ink2)">${last?agoLabel(daysAgo(last)):"never"}</div>
         <div style="font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);font-weight:800;margin-top:2px">Last run</div></div>
     </div>
     ${g.html}
     <div class="wk-row">
       <button class="b b-ghost" onclick="openCardioScreen()">History</button>
-      <button class="b b-blue" onclick="openSheet('cardioAdd')">+ Log a run</button>
+      <button class="b b-blue" onclick="openCardioAdd()">+ Log a run</button>
     </div>
   </div>`;
 }
@@ -229,6 +229,7 @@ function cardioCard(){
    One Workouts page (no Strength / Cardio tabs)
    --------------------------------------------------------------------------- */
 let cardioScreen = false, reorderWk = false;
+window.inCardioScreen = () => cardioScreen;
 const _renderWorkouts = renderWorkouts;
 renderWorkouts = function(){
   if(cardioScreen) return renderCardioScreen();

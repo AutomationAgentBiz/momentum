@@ -598,7 +598,7 @@ function render(){
       row.style.setProperty("--pipc",c.fg);
       row.style.setProperty("--pipg",c.fg+"66");
       row.innerHTML=`${grip}
-        <div class="icon" style="background:${c.bg}">${c.icon}</div>
+        <div class="icon" style="background:${c.bg}">${taskIcon(t,c)}</div>
         <div class="tmid">
           <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap">
             <div class="tname">${esc(t.name)}</div>
@@ -617,7 +617,7 @@ function render(){
         </div>
         <div class="steps">
           <div class="stepbtn minus${t.count?"":" off"}">−</div>
-          <div class="stepbtn half" title="Add a half">½</div>
+          ${t.target<=PIP_MAX?`<div class="stepbtn half" title="Add a half">½</div>`:``}
           <div class="stepbtn plus${t.done?" full":""}">${t.done?"✓":"+"}</div>
         </div>`;
       row.querySelectorAll(".pip").forEach(p=>{
@@ -630,14 +630,14 @@ function render(){
            jumping past it to the whole number below */
         const step = (t.count % 1) ? (t.count % 1) : stepFor(t);
         setCount(t.id, t.count-step); };
-      row.querySelector(".stepbtn.half").onclick=e=>{ e.stopPropagation();
+      if(row.querySelector(".stepbtn.half")) row.querySelector(".stepbtn.half").onclick=e=>{ e.stopPropagation();
         setCount(t.id, t.count+0.5); };
       row.querySelector(".stepbtn.plus").onclick=e=>{ e.stopPropagation();
         if(t.count>=t.target){ toast(`${t.name} target already hit`); return; }
         setCount(t.id, t.count+stepFor(t)); };
     } else {
       row.innerHTML=`${grip}
-        <div class="icon" style="background:${c.bg}">${c.icon}</div>
+        <div class="icon" style="background:${c.bg}">${taskIcon(t,c)}</div>
         <div class="tmid"><div class="tname">${esc(t.name)}</div>
           <div class="tcat" style="color:${c.fg}">${c.label}${noteBadge(t)}</div>
           ${projTag(t)}${staleBadge(t)}</div>
@@ -699,7 +699,7 @@ function renderUpcoming(){
     const label = g.key===offsetDay(1) ? "Tomorrow" : dLabel(new Date(g.key+"T12:00:00"));
     const rows=g.items.slice(0,5).map(t=>{const c=catOf(t.cat);
       return `<div class="up" onclick="openDetail(${t.id})">
-        <div class="icon" style="background:${c.bg}">${c.icon}</div>
+        <div class="icon" style="background:${c.bg}">${taskIcon(t,c)}</div>
         <div class="un">${esc(t.name)}</div><div class="ut">${fmtTime(t.time)}</div></div>`;}).join("");
     const more=g.items.length>5?`<div class="up" style="color:var(--ink3);font-size:11.5px;padding-left:16px">+ ${g.items.length-5} more</div>`:``;
     return `<div class="daylabel">${label} · ${g.items.length}</div>${rows}${more}`;
@@ -720,7 +720,7 @@ function renderPull(){
         <span class="link" onclick="go('tasks')">${pool.length} waiting</span></div>
       ${show.map(t=>{const c=catOf(t.cat), p=t.proj?projById(t.proj):null;
         return `<div class="lg">
-          <div class="icon" style="background:${c.bg}">${c.icon}</div>
+          <div class="icon" style="background:${c.bg}">${taskIcon(t,c)}</div>
           <div class="lm" onclick="openDetail(${t.id})" tabindex="0" role="button"><b>${esc(t.name)}</b>
             <span>${p?`${p.icon} ${esc(p.name)} · `:``}${t.est||30} min</span></div>
           <div class="crbtn take" style="flex:none" onclick="addToToday(${t.id})">+ Today</div>
@@ -743,7 +743,7 @@ function addToToday(id){
    Every write goes through save(). Storage is probed once and guarded, so if the
    browser won't allow it the app still runs exactly as before, in memory. */
 let STORE_OK=false, SAVE_KEY="momentum.v1", SCHEMA=2;
-const BUILD="v55 · Sep 29 · one workouts page, month calendar, reorder";   // shown in Settings and the menu — bump this every release
+const BUILD="v56 · Sep 29 · walk-through fixes, finish screen, tidy unfinished";   // shown in Settings and the menu — bump this every release
 (function probe(){ try{ const k="__m"; window.localStorage.setItem(k,"1"); window.localStorage.removeItem(k); STORE_OK=true; }catch(e){ STORE_OK=false; } })();
 
 const SAVED=["tasks","nextId","PROJECTS","carryover","dayNote","missLog","WEBS","commitments",
@@ -2681,6 +2681,14 @@ const isCapped = t => !!t && (t.hardCap===true || MED_RE.test(t.name||""));
 /* Above this many, dots stop being readable and start being a wall. */
 const PIP_MAX = 12;
 /* Tapping + eight thousand times isn't a plan. Big targets move in useful jumps. */
+/* v56: a few routines get their own icon instead of the category's — vitamins aren't a fried egg. */
+function taskIcon(t,c){ const n=(t&&t.name)||"";
+  if(/vitamin|supplement|multi|fish oil|omega|creatine/i.test(n)) return "💊";
+  if(/\bmeds?\b|medicat|pill|dose/i.test(n)) return "💊";
+  if(/water|hydrat/i.test(n)) return "💧";
+  if(/protein/i.test(n)) return "🥩";
+  if(/steps?\b|walk/i.test(n)) return "👟";
+  return c.icon; }
 const stepFor = t => t.target>2000 ? 500 : t.target>200 ? 50 : t.target>PIP_MAX ? 5 : 1;
 const SUPP_RE = /\bsupp(lement)?s?\b|\bvitamin/i;
 const CAF_RE  = /\bcaffeine\b|\bcoffee\b/i;
@@ -4125,7 +4133,7 @@ function renderTracker(){
     const pad='<div style="aspect-ratio:1"></div>'.repeat(firstDay);
     return `<div class="card">
       <div class="tk-top">
-        <div class="icon" style="background:${c.bg}">${c.icon}</div>
+        <div class="icon" style="background:${c.bg}">${taskIcon(t,c)}</div>
         <div class="tk-name"><b>${esc(t.name)}</b><span style="color:${c.fg}">${t.target} ${unitOf(t)} a day</span></div>
         <div class="tk-big"><b style="color:${t.done?'#12c98a':c.fg}">${t.count}<span style="color:var(--ink3);font-size:13px">/${t.target}</span></b>
           <small style="${(capped&&t.count>t.target)?'color:#ff8aa0':''}">${t.count>t.target?`+${Math.round((t.count-t.target)*100)/100} over`:t.done?"hit today":"today"}</small></div>
@@ -4629,7 +4637,7 @@ async function delSession(wid, key){
   const snap=list[i], at=i;
   list.splice(i,1);
   save(); renderWorkouts(); openWorkout(wid,1);
-  toastUndo(`Removed ${snap.d||"that session"}`, ()=>{
+  toastUndo(`Removed ${snap.d?dayLabel(snap.d):"that session"}`, ()=>{
     (wkHist[wid]=wkHist[wid]||[]).splice(at,0,snap);
     save(); renderWorkouts(); openWorkout(wid,1);
   });
@@ -4809,7 +4817,7 @@ function renderSession(){
       ${Array.from({length:wkSession.rounds},(_,r)=>{
         const filled=EX.filter(e=>(wkSession.entries[e.n]||[])[r]&&wkSession.entries[e.n][r].reps>0).length;
         return `<button class="b rtab${r===R?" on":""}" onclick="setRound(${r+1})"
-          style="flex:1">Round ${r+1}${filled?` · ${filled}`:``}</button>`;}).join("")}
+          style="flex:1">Round ${r+1}${filled?` · ${filled}/${EX.length} done`:``}</button>`;}).join("")}
     </div>
     <div class="wk-note" style="padding:0 16px 13px">Go through the whole list, then come back and do it again on Round 2. Logging them apart shows you where you faded.</div></div>`:``}
 
@@ -5038,7 +5046,7 @@ function paintRoundTabs(){
   const EX=sessEx();
   document.querySelectorAll('#wkBody .wk-row .b[onclick^="setRound"]').forEach((btn,r)=>{
     const filled=EX.filter(e=>(wkSession.entries[e.n]||[])[r]&&wkSession.entries[e.n][r].reps>0).length;
-    btn.textContent=`Round ${r+1}${filled?` · ${filled}`:``}`;
+    btn.textContent=`Round ${r+1}${filled?` · ${filled}/${EX.length} done`:``}`;
   });
 }
 /* ---- load on a move: pill, button, panel ---------------------------------
@@ -5464,7 +5472,7 @@ function renderCardio(){
           <div class="lr"><b style="color:${t.c}">${pace(c.mi,c.min)}</b><span>Pace</span></div>
           <div class="lx" onclick="event.stopPropagation();delCardio(${c.id})">✕</div>
         </div>`;}).join("")}
-      <div class="wk-row"><button class="b b-blue" onclick="openSheet('cardioAdd')">+ Log a run</button></div>
+      <div class="wk-row"><button class="b b-blue" onclick="openCardioAdd()">+ Log a run</button></div>
     </div>`;
 }
 /* Heart rate over one run. One series, so no legend — the title names it.
@@ -5547,10 +5555,13 @@ function saveCardio(){
   const mi=+$("cdMi").value, min=+$("cdMin").value;
   if(!mi||!min){ toast("Need distance and time"); return; }
   const _cb=dataSizes();
-  cardio.push({id:newId(),ago:0,d:ymd(new Date()),type:$("cdType").value,mi:+mi.toFixed(2),min});
+  const today=ymd(new Date()); let day=($("cdDay")&&$("cdDay").value)||today;
+  if(day>today){ toast("That day is in the future"); return; }
+  cardio.push({id:newId(),ago:0,d:day,type:$("cdType").value,mi:+mi.toFixed(2),min});
   logChange("you logged cardio", _cb);
   closeAll(); renderCardio(); $("cdMi").value=""; $("cdMin").value="";
-  toast(`Logged ${mi} mi at ${pace(mi,min)}`);
+  if($("cdDay")) $("cdDay").value="";
+  toast(`Logged ${mi} mi at ${pace(mi,min)}${day!==today?` on ${dayLabel(day)}`:""}`);
 }
 function delCardio(id){ const snap=cardio.find(c=>c.id===id); if(!snap) return;
   cardio=cardio.filter(c=>c.id!==id); save(); renderCardio();
@@ -5589,8 +5600,8 @@ function renderMeals(){
       <div class="chart" style="height:100px">${hist.map(h=>{
         const over=h.kcal>meals.kcalTarget*1.1, col=over?"#ff7a7a":daysAgo(h)===0?"#16d494":"#5b9dff";
         return `<div class="bar" title="${h.kcal} kcal">
-          <div class="vv" style="color:${col}">${(h.kcal/1000).toFixed(1)}k</div>
-          <i style="height:${Math.max(8,Math.round(h.kcal/hmax*100))}%;background:linear-gradient(180deg,${col},${col}44)"></i>
+          <div class="vv" style="color:${h.kcal?col:'var(--ink3)'}">${h.kcal?(h.kcal/1000).toFixed(1)+"k":"—"}</div>
+          <i style="height:${h.kcal?Math.max(8,Math.round(h.kcal/(hmax||1)*100)):3}%;background:${h.kcal?`linear-gradient(180deg,${col},${col}44)`:'#2a3442'}"></i>
           <em>${daysAgo(h)===0?"today":daysAgo(h)+"d"}</em></div>`;}).join("")}</div>
       <div class="wk-note" style="padding-top:12px">Red means you went 10% over target that day.</div>
     </div>
@@ -6025,7 +6036,7 @@ function openProject(id){
   const row = t => {
     const c=catOf(t.cat);
     return `<div class="lg">
-      <div class="icon" style="background:${c.bg}">${c.icon}</div>
+      <div class="icon" style="background:${c.bg}">${taskIcon(t,c)}</div>
       <div class="lm"><b style="${t.done?'color:var(--ink3);text-decoration:line-through':''}">${esc(t.name)}</b>
         <span>${c.label}${t.log&&t.log.length?` · 📝 ${t.log.length}`:``}${t.lastWorked!=null?` · ${t.lastWorked}d ago`:``}</span></div>
       ${onToday(t)?`<div class="crbtn take" style="background:#1e2734;color:#7fb0ff;border:1px solid #2c374a" onclick="openDetail(${t.id})">Open</div>`
@@ -6388,7 +6399,7 @@ function answerAbout(text){
     const lines=[];
     if(/task/i.test(text)){
       const pm=PROJECTS.map(p=>`${p.name}: ${projTasks(p.id).length} (${projDone(p.id)} done)`);
-      lines.push(`<b>${F.tasksToday}</b> on today's list, <b>${F.tasksAll}</b> in the app all in.`, ...pm.map(x=>x)); }
+      lines.push(`<b>${F.tasksToday}</b> on today's list. <b>${tasks.filter(t=>!t.routine).length}</b> one-time tasks and <b>${tasks.filter(t=>t.routine).length}</b> routines in the app (${tasks.filter(t=>t.routine&&t.paused).length} paused).`, ...pm.map(x=>x)); }
     if(/water|streak|counter|routine|drink/i.test(text))
       F.counters.forEach(c=>lines.push(`<b>${c.name}</b> — ${c.count} of ${c.target} today, 🔥 ${c.streak} day streak.`));
     if(/project/i.test(text) && !/task/i.test(text)) PROJECTS.forEach(p=>lines.push(`<b>${p.name}</b> — ${projDone(p.id)}/${projTasks(p.id).length} done, ${p.status}.`));
@@ -8384,14 +8395,14 @@ function renderWhyNot(){
               : n===2 ? "background:#ff7a1a;opacity:.65;border-color:transparent"
               : "background:#ff4d4d;border-color:#ff4d4d";
     return `<div class="gd${k===ymd(today)?" today":""}${whyDay===k?" sel":""}" style="${col}"
-      title="${dLabel(d)} · ${n} missed" onclick="pickWhyDay('${k}')"></div>`;}).join("");
+      title="${dLabel(d)} · ${n} missed" onclick="pickWhyDay('${k}')"><span class="gdn">${d.getDate()===1?MON3[d.getMonth()]:d.getDate()}</span></div>`;}).join("");
 
   const worst=[...Object.entries(byDay)].sort((a,b)=>b[1].length-a[1].length)[0];
   const dayList = whyDay ? (byDay[whyDay]||[]) : null;
 
   box.innerHTML=`
     <div class="card">
-      <div class="card-head"><span class="card-title">Last 5 weeks</span><span class="link">${missLog.length} logged</span></div>
+      <div class="card-head"><span class="card-title">Last 5 weeks</span><span class="link">${MON3[cells[0].getMonth()]} ${cells[0].getDate()} – ${MON3[cells[cells.length-1].getMonth()]} ${cells[cells.length-1].getDate()} · ${missLog.length} logged</span></div>
       <div class="gdays"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
       <div class="grid">${pad}${grid}</div>
       <div class="tk-legend">
@@ -8407,7 +8418,7 @@ function renderWhyNot(){
         <span class="link" onclick="pickWhyDay(null)">Clear</span></div>
       ${dayList.length?dayList.map(m=>{const c=catOf(m.cat);
         return `<div class="lg">
-          <div class="icon" style="background:${c.bg}">${c.icon}</div>
+          <div class="icon" style="background:${c.bg}">${taskIcon(m,c)}</div>
           <div class="lm"><b>${esc(m.name)}</b><span>${fmtTime(m.time)} · ${c.label}</span></div>
           <div class="whytag">${esc(m.reason)}</div>
         </div>${m.note?`<div class="whynote">"${esc(m.note)}"</div>`:``}`;}).join("")
@@ -8942,7 +8953,7 @@ function renderOverview(){
       <div class="card-head"><span class="card-title">Needs you</span><span class="link">${attention.length}</span></div>
       ${attention.map(a=>{const c=catOf(a.t.cat);
         return `<div class="lg" onclick="${a.t.id?`openDetail(${a.t.id})`:`go('today')`}">
-          <div class="icon" style="background:${c.bg}">${c.icon}</div>
+          <div class="icon" style="background:${c.bg}">${taskIcon(a.t,c)}</div>
           <div class="lm"><b>${esc(a.t.name)}</b><span style="color:${a.tone}">${a.why}</span></div>
           <div class="crbtn drop">›</div></div>`;}).join("")}
     </div>`:``}
@@ -8963,7 +8974,7 @@ function renderOverview(){
     <div class="card">
       <div class="card-head"><span class="card-title">Health today</span><span class="link" onclick="go('tracker')">Tracker ›</span></div>
       ${counters.map(t=>{const c=catOf(t.cat),pc=Math.round(t.count/t.target*100);
-        return `<div class="lg"><div class="icon" style="background:${c.bg}">${c.icon}</div>
+        return `<div class="lg"><div class="icon" style="background:${c.bg}">${taskIcon(t,c)}</div>
           <div class="lm"><b>${esc(t.name)}</b><span>${t.count} of ${t.target} ${unitOf(t)}</span></div>
           <div class="lr"><b style="color:${t.done?'#12c98a':c.fg}">${pc}%</b><span>🔥 ${t.streak}</span></div></div>`;}).join("")}
     </div>
@@ -8971,7 +8982,7 @@ function renderOverview(){
     <div class="card">
       <div class="card-head"><span class="card-title">Routines</span><span class="link" onclick="go('routines')">Manage ›</span></div>
       ${dayRoutines().filter(t=>!isCounter(t)).map(t=>{const c=catOf(t.cat);
-        return `<div class="lg"><div class="icon" style="background:${c.bg}">${c.icon}</div>
+        return `<div class="lg"><div class="icon" style="background:${c.bg}">${taskIcon(t,c)}</div>
           <div class="lm"><b>${esc(t.name)}</b><span>${t.freq}</span></div>
           <div class="lr"><b style="color:${t.done?'#12c98a':'var(--ink3)'}">${t.done?"✓":"—"}</b><span>🔥 ${t.streak}</span></div></div>`;}).join("")}
     </div>`;
@@ -9024,7 +9035,7 @@ function renderTaskRows(){
       </div>`;
     }
     return `<div class="lg" tabindex="0" role="button" onclick="openDetail(${t.id})">
-      <div class="icon" style="background:${c.bg}">${c.icon}</div>
+      <div class="icon" style="background:${c.bg}">${taskIcon(t,c)}</div>
       <div class="lm"><b style="${t.done?'color:var(--ink3);text-decoration:line-through':''}">${esc(t.name)}</b>
         <span>${p?`${p.icon} ${esc(p.name)} · `:``}${t.date?dLabel(new Date(t.date+"T12:00:00")):"unscheduled"}${t.due?` · due ${dLabel(new Date(t.due+"T12:00:00"))}`:``}${b&&!b.done?` · waits on ${esc(b.name)}`:``}</span></div>
       <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex:none">
@@ -9204,7 +9215,7 @@ function renderRoutines(){
   const rs=tasks.filter(t=>t.routine);
   box.innerHTML=`
     <div class="card">
-      <div class="card-head"><span class="card-title">All routines</span><span class="link">${rs.filter(t=>!t.paused).length} active</span></div>
+      <div class="card-head"><span class="card-title">All routines</span><span class="link">${rs.length} total · ${rs.filter(t=>!t.paused).length} active${rs.some(t=>t.paused)?` · ${rs.filter(t=>t.paused).length} paused`:""}</span></div>
       ${rs.map(t=>{const c=catOf(t.cat),h=history[t.id]||[];
         const hit=h.filter(x=>x.v>=(t.target||1)).length;
         return `<div style="padding:11px 16px;position:relative;border-top:1px solid var(--line)">
@@ -9517,7 +9528,8 @@ function renderSettings(){
           <b style="color:#ff9d4d">${bad.length} task${bad.length===1?"":"s"} lost their category</b> in an update and show as
           Uncategorized. Open each one and pick a category, or erase and start fresh below.</div>`:``;})()}
       <div class="macro">
-        <div class="mc"><b>${tasks.length}</b><span>Tasks</span></div>
+        <div class="mc"><b>${tasks.filter(t=>!t.routine).length}</b><span>Tasks</span></div>
+        <div class="mc"><b>${tasks.filter(t=>t.routine).length}</b><span>Routines</span></div>
         <div class="mc"><b>${PROJECTS.length}</b><span>Projects</span></div>
         <div class="mc"><b>${notes.length}</b><span>Notes</span></div>
         <div class="mc"><b>${WEBS.length}</b><span>Webs</span></div>

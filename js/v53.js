@@ -63,6 +63,8 @@ aiPlainError = function(msg){
   if(/limit is used up|cap/.test(m)) return "Today's AI limit is used up. It resets at midnight UTC.";
   if(/turn on sync|no_room|sync code isn't in use/.test(m))
     return "AI goes through your site and needs sync on. Settings → Sync your devices → Turn on here.";
+  if(/invalid x-api-key|authentication_error|401/.test(m))
+    return "The AI key saved in Netlify isn't working. Put a fresh ANTHROPIC_API_KEY in Netlify (Settings shows the steps).";
   if(/anthropic_api_key isn't set|no_key/.test(m))
     return "Your Netlify site doesn't have ANTHROPIC_API_KEY yet. Settings shows the steps.";
   return _aiPlainError(msg);
@@ -102,7 +104,7 @@ callAI = async function(system, user, maxTokens, opts){
       try{ text = await serverCall(system, user, maxTokens, opts); }
       catch(e){
         // the site can't do it (no key yet, sync not set up) — use this device's key if it has one
-        if(AI.key && /no_key|no_room|unknown_room/.test(e.code||"")) text = await directCall(system, user, maxTokens, opts);
+        if(AI.key && !/cap|limit/i.test((e.code||"")+" "+(e.message||""))) text = await directCall(system, user, maxTokens, opts);
         else throw e;
       }
     } else if(AI.key){
@@ -351,7 +353,7 @@ function openPlus(){
       <div class="plusopt" onclick="closeAll();askAbout(null,'note: ')"><span class="pi">📝</span><b>Note</b><span>Jot something down</span></div>
     </div>
     ${counters.length?`<div style="font-size:10px;font-weight:900;letter-spacing:.14em;color:var(--ink3);margin-top:16px">QUICK LOG</div>
-      <div class="quicklog">${counters.map(t=>`<span onclick="quickLog(${t.id},1)">+1 ${esc(t.name)} · ${t.count}/${t.target}</span>`).join("")}</div>`:``}
+      <div class="quicklog">${counters.map(t=>`<span onclick="quickLog(${t.id},${stepFor(t)})">+${stepFor(t).toLocaleString()} ${esc(t.name)} · ${t.count.toLocaleString()}/${t.target.toLocaleString()}</span>`).join("")}</div>`:``}
     <div class="btns"><button class="b b-violet" style="width:100%" onclick="closeAll();go('think')">✦ Just tell the assistant</button></div>`;
   closeAll(); openSheet("plusSheet");
 }
@@ -360,7 +362,7 @@ window.quickLog = function(id, n){
   const t = getTask(id); if(!t) return;
   setCount(id, t.count + n);
   closeAll();
-  toast(`${t.name}: ${t.count} of ${t.target}`);
+  toast(`${t.name}: ${t.count.toLocaleString()} of ${t.target.toLocaleString()}`);
 };
 
 /* ---------------------------------------------------------------------------
@@ -656,7 +658,7 @@ function buildRest(){
   if(document.getElementById("restChip")) return;
   const r = document.createElement("div"); r.className = "restchip"; r.id = "restChip";
   r.innerHTML = `<div><div class="rl">REST</div><b id="restT">1:30</b></div>
-    <span class="rb" onclick="restAdd(30)">+30s</span><span class="rb" onclick="restCycle()" id="restLen">90s</span>
+    <span class="rb" onclick="restAdd(30)">+30s</span><span class="rb" onclick="restCycle()" id="restLen" title="Change how long you rest">Rest 90s ⟳</span>
     <span class="rb" onclick="restStop()">Skip</span>`;
   document.body.appendChild(r);
 }
@@ -664,7 +666,7 @@ function paintRest(){
   const r = document.getElementById("restChip"); if(!r) return;
   const m = Math.floor(Math.max(0,restLeft)/60), s = Math.max(0,restLeft)%60;
   document.getElementById("restT").textContent = restLeft>0 ? `${m}:${String(s).padStart(2,"0")}` : "Go";
-  document.getElementById("restLen").textContent = restLen()+"s";
+  document.getElementById("restLen").textContent = "Rest "+restLen()+"s ⟳";
   r.classList.toggle("done", restLeft<=0);
 }
 function startRest(){
@@ -839,12 +841,13 @@ askAction = function(text){
 /* Undo for changes made by the built-in brain too, not only the AI. */
 const _sendThink = window.sendThink;
 window.sendThink = async function(textIn){
-  if(AI.on) return _sendThink(textIn);
+  /* v56: snapshot every time — when the AI can't be reached the built-in brain
+     answers instead, and those changes need an Undo too */
   const snap = {tasks: JSON.stringify(tasks), notes: JSON.stringify(notes)};
   await _sendThink(textIn);
   const changed = JSON.stringify(tasks)!==snap.tasks || JSON.stringify(notes)!==snap.notes;
   const last = thMsgs[thMsgs.length-1];
-  if(changed && last && last.role==="assistant"){
+  if(changed && last && last.role==="assistant" && !(last.acts && last.acts.some(a=>a.undo))){
     last.acts = [{state:"done", label:"Change made", undo:{k:"snap", tasks:snap.tasks, notes:snap.notes}}];
     thSave(); drawThink();
   }
