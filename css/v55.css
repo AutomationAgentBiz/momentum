@@ -24,7 +24,7 @@
 .mc-cell.did .mc-n{color:#fff;}
 .mc-dots{position:absolute;left:4px;right:4px;bottom:4px;display:flex;gap:2px;justify-content:center;flex-wrap:wrap;}
 .mc-dot{width:7px;height:7px;border-radius:50%;box-shadow:0 0 5px rgba(255,255,255,.25);}
-.mc-mi{position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);font-size:10.5px;font-weight:900;color:#ffd0d8;letter-spacing:-.02em;}
+.mc-mi{position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);font-size:10.5px;font-weight:900;color:#e3d6ff;letter-spacing:-.02em;}
 .mc-cell.did .mc-mi{top:auto;bottom:12px;transform:translateX(-50%);font-size:9.5px;}
 /* missed: a soft red tile with a drawn ✕, not an alarm */
 .mc-cell.miss{background:repeating-linear-gradient(135deg,rgba(255,95,126,.07) 0 5px,rgba(255,95,126,.02) 5px 10px);border-color:rgba(255,95,126,.35);}

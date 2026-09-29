@@ -1,0 +1,51 @@
+/* ================= v56 — polish from the walk-through ================= */
+
+/* no sideways jump when a page gets long enough to scroll */
+html{scrollbar-gutter:stable;}
+
+/* dark, thin scrollbars everywhere (the white bar in sheets) */
+*{scrollbar-width:thin;scrollbar-color:#2e3a4b transparent;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#2e3a4b;border-radius:8px;}
+
+/* sheets never run off the bottom; Save stays reachable */
+.sheet{max-height:calc(100dvh - 40px);overflow-y:auto;overscroll-behavior:contain;}
+.sheet .btns{position:sticky;bottom:0;background:inherit;padding-bottom:calc(10px + env(safe-area-inset-bottom));}
+
+/* rest timer hides while a sheet or pop-up is open, so it can't cover Save */
+body:has(.sheet.on) .restchip, body:has(#scrim.on) .restchip{display:none !important;}
+
+/* test copy: toasts sit under the yellow banner, not behind it */
+body:has(#testBanner) .toast{top:calc(38px + env(safe-area-inset-top));}
+.toast{z-index:140;}
+
+/* unfinished-session notes */
+.unfin-note{margin:0 16px 10px;padding:9px 11px;border-radius:11px;font-size:12px;line-height:1.45;color:#ffc79a;
+  background:rgba(255,157,77,.08);border:1px solid rgba(255,157,77,.35);}
+.unfin-note span{font-weight:900;color:#ff9d4d;cursor:pointer;white-space:nowrap;}
+
+/* week column label on the month squares */
+.wg .wg-dow .wkh{font-size:8px;letter-spacing:.04em;text-transform:uppercase;}
+
+/* Why Not squares show their date */
+#view-whynot .gd{position:relative;display:flex;align-items:center;justify-content:center;}
+.gdn{font-size:9px;font-weight:800;color:rgba(233,238,246,.55);pointer-events:none;}
+
+/* ---- on a computer ---- */
+@media (min-width:900px){
+  /* the + button sits inside the page column, not out in the margin */
+  .plusfab{left:calc(50vw - 372px);bottom:calc(9px + env(safe-area-inset-bottom));width:48px;height:48px;border-radius:15px;z-index:61;
+    box-shadow:0 6px 16px rgba(44,106,224,.45);}
+  /* grids use the width of their card */
+  #trackerBody .grid, #trackerBody .gdays, #view-whynot .grid, #view-whynot .gdays{max-width:560px;margin-left:auto;margin-right:auto;}
+  .mcal, .wg{max-width:640px;margin-left:auto;margin-right:auto;}
+}
+
+/* "New tracker" is a button in the page now, not a floating one over the squares */
+#view-tracker > .fab{display:none !important;}
+.newtrk{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:46px;margin:0 0 12px;border-radius:14px;cursor:pointer;
+  border:1px dashed rgba(91,157,255,.55);background:rgba(61,132,255,.08);color:#9cc2ff;font-weight:850;font-size:13px;letter-spacing:.02em;}
+
+/* empty days before the 1st were taller than real days and pushed row 2 down */
+.mc-cell.empty,.wg-cell.empty{padding:0;font-size:0;}
