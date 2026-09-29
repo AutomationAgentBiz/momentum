@@ -1,6 +1,6 @@
 /* Momentum offline cache. Bump CACHE when you ship a new version. */
-const CACHE = "momentum-v54";
-const FILES = ["./","./index.html","./css/app.css","./css/v53.css","./js/app.js","./js/v53.js","./manifest.webmanifest","./icon-180.png","./icon-192.png","./icon-512.png"];
+const CACHE = "momentum-v55";
+const FILES = ["./","./index.html","./css/app.css","./css/v53.css","./css/v55.css","./js/app.js","./js/v53.js","./js/v55.js","./manifest.webmanifest","./icon-180.png","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
