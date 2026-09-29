@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/v53.css">
 <link rel="stylesheet" href="css/v55.css">
+<link rel="stylesheet" href="css/v56.css">
 </head>
 <body>
 
@@ -39,7 +40,7 @@
   <!-- One search across everything. There was only ever a search box on the
        Tasks page, so a routine, project or note could not be looked up at all. -->
   <div class="drsearch">
-    <input class="f" id="navQ" type="search" placeholder="Search tasks, routines, projects, notes…"
+    <input class="f" id="navQ" type="search" placeholder="Search everything…"
            aria-label="Search everything" oninput="navSearch(this.value)">
     <div id="navResults"></div>
   </div>
@@ -164,7 +165,7 @@
         Momentum
       </div>
       <h1>Tracker</h1>
-      <div class="date">Last 5 weeks · log these on Today</div>
+      <div class="date">Every day since you started · log these on Today</div>
     </div>
   </div>
   <div class="wrap" id="trackerBody" style="padding-bottom:110px"></div>
@@ -885,7 +886,8 @@
       <div><label class="f">Distance (miles)</label><input class="f" id="cdMi" type="number" step="0.1" min="0" placeholder="3.1"></div>
       <div><label class="f">Time (minutes)</label><input class="f" id="cdMin" type="number" step="1" min="0" placeholder="28"></div>
     </div>
-    <p style="font-size:12px;color:var(--ink3);margin:10px 0 0">Pace works itself out from those two.</p>
+    <label class="f">Day</label><input class="f" id="cdDay" type="date">
+    <p style="font-size:12px;color:var(--ink3);margin:10px 0 0">Pace works itself out from distance and time.</p>
     <div class="btns">
       <button class="b b-ghost" onclick="closeAll()">Cancel</button>
       <button class="b b-blue" onclick="saveCardio()">Save run</button>
@@ -1051,5 +1053,6 @@ post in the contractor groups"></textarea>
 <script src="js/app.js"></script>
 <script src="js/v53.js"></script>
 <script src="js/v55.js"></script>
+<script src="js/v56.js"></script>
 </body>
 </html>
