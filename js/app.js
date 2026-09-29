@@ -204,6 +204,9 @@ window.addEventListener("popstate", ()=>{
   /* the lock screen is not something back should get you past */
   if(lock.pin && $("lockScreen") && $("lockScreen").style.display==="flex"){ pushBackTrap(); return; }
   if(sheetIsOpen()){ closeAll(); pushBackTrap(); return; }
+  /* v55: screens inside a page (a workout, its history, a project) step back
+     one level first, instead of leaving the page. */
+  if(typeof innerBack==="function" && innerBack()){ pushBackTrap(); return; }
   const cur=(document.querySelector(".view.active")||{}).id||"";
   if(cur && cur!=="view-today"){ go(typeof navBack==="function" ? navBack() : "today"); pushBackTrap(); return; }
   if(_backArmed) return;               // second press: let the browser have it
@@ -740,7 +743,7 @@ function addToToday(id){
    Every write goes through save(). Storage is probed once and guarded, so if the
    browser won't allow it the app still runs exactly as before, in memory. */
 let STORE_OK=false, SAVE_KEY="momentum.v1", SCHEMA=2;
-const BUILD="v54 · Sep 27 · beat-last-time bars, reps not percentages";   // shown in Settings and the menu — bump this every release
+const BUILD="v55 · Sep 29 · one workouts page, month calendar, reorder";   // shown in Settings and the menu — bump this every release
 (function probe(){ try{ const k="__m"; window.localStorage.setItem(k,"1"); window.localStorage.removeItem(k); STORE_OK=true; }catch(e){ STORE_OK=false; } })();
 
 const SAVED=["tasks","nextId","PROJECTS","carryover","dayNote","missLog","WEBS","commitments",
