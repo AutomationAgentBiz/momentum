@@ -1,0 +1,75 @@
+/* ================= v55 — Workouts: month calendar, one page, reorder ================= */
+
+/* ---- big month calendar ---- */
+.mcal{padding:14px 14px 12px;background:linear-gradient(180deg,#161d29,#121821);}
+.mc-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.mc-title{flex:1;text-align:center;font-size:18px;font-weight:850;letter-spacing:-.01em;}
+.mc-nav{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:#1b2330;border:1px solid #2a3442;color:var(--ink2);font-size:20px;cursor:pointer;user-select:none;}
+.mc-nav.off{opacity:.25;pointer-events:none;}
+.mc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+.mc-stats div{background:#0f141b;border:1px solid #212a36;border-radius:11px;padding:8px 4px;text-align:center;}
+.mc-stats b{display:block;font-size:18px;font-variant-numeric:tabular-nums;}
+.mc-stats span{display:block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-top:2px;}
+.mc-dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:5px;}
+.mc-dow span{text-align:center;font-size:10px;font-weight:900;color:var(--ink3);letter-spacing:.08em;}
+.mc-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;}
+.mc-cell{position:relative;aspect-ratio:1;border-radius:10px;background:#11161f;border:1px solid #1e2632;cursor:pointer;overflow:hidden;
+  transition:transform .12s ease;}
+.mc-cell:active{transform:scale(.94);}
+.mc-cell.empty{background:transparent;border-color:transparent;cursor:default;}
+.mc-cell.future{opacity:.55;}
+.mc-cell.today{outline:2px solid var(--accent);outline-offset:1px;}
+.mc-n{position:absolute;top:3px;left:5px;font-size:10px;font-weight:800;color:rgba(233,238,246,.55);}
+.mc-cell.did .mc-n{color:#fff;}
+.mc-dots{position:absolute;left:4px;right:4px;bottom:4px;display:flex;gap:2px;justify-content:center;flex-wrap:wrap;}
+.mc-dot{width:7px;height:7px;border-radius:50%;box-shadow:0 0 5px rgba(255,255,255,.25);}
+.mc-mi{position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);font-size:10.5px;font-weight:900;color:#ffd0d8;letter-spacing:-.02em;}
+.mc-cell.did .mc-mi{top:auto;bottom:12px;transform:translateX(-50%);font-size:9.5px;}
+/* missed: a soft red tile with a drawn ✕, not an alarm */
+.mc-cell.miss{background:repeating-linear-gradient(135deg,rgba(255,95,126,.07) 0 5px,rgba(255,95,126,.02) 5px 10px);border-color:rgba(255,95,126,.35);}
+.mc-x{position:absolute;top:52%;left:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#ff8fa3;
+  background:rgba(255,95,126,.14);border:1px solid rgba(255,95,126,.45);}
+.mc-due{position:absolute;inset:5px;border-radius:8px;border:1.5px dashed;pointer-events:none;}
+.mc-key{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:11px;font-size:10.5px;color:var(--ink2);font-weight:700;}
+.mc-key span{display:inline-flex;align-items:center;gap:5px;}
+.mc-key i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.kx{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;
+  font-size:8px;font-weight:900;color:#ff8fa3;background:rgba(255,95,126,.14);border:1px solid rgba(255,95,126,.45);}
+.mc-streak{margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(255,157,77,.1);border:1px solid rgba(255,157,77,.35);
+  color:#ffc38a;font-size:12px;font-weight:800;text-align:center;}
+
+/* ---- each workout's month squares ---- */
+.wg .wg-row{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) 30px;gap:4px;align-items:center;margin-top:4px;}
+.wg .wg-dow span{text-align:center;font-size:9.5px;font-weight:900;color:var(--ink3);}
+.wg-cell{aspect-ratio:1;border-radius:7px;background:#151b24;border:1px solid #212a36;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;position:relative;}
+.wg-cell.empty{background:transparent;border-color:transparent;cursor:default;}
+.wg-cell.today{outline:1.5px solid var(--accent);outline-offset:1px;}
+.wg-n{font-size:9px;font-weight:800;color:rgba(233,238,246,.4);}
+.wg-cell.did .wg-n{color:rgba(255,255,255,.85);}
+.wg-cell.missed{background:rgba(255,95,126,.06);border-color:rgba(255,95,126,.35);}
+.wg-x{font-size:10px;font-weight:900;color:#ff8fa3;}
+.wg-mi{font-size:9.5px;font-weight:900;color:#fff;letter-spacing:-.03em;}
+.wg-cell:active{transform:scale(.92);}
+
+/* ---- day details sheet ---- */
+.dd-card{margin-top:10px;padding:11px 12px;border-radius:13px;background:#141a24;border:1px solid #2a3442;}
+.dd-card.miss{background:rgba(255,95,126,.06);border-color:rgba(255,95,126,.3);}
+.dd-top{display:flex;align-items:center;gap:9px;}
+.dd-top b{flex:1;font-size:14px;}
+.dd-ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+.dd-ic.miss{background:rgba(255,95,126,.14);color:#ff8fa3;font-weight:900;font-size:13px;border:1px solid rgba(255,95,126,.45);}
+.dd-sum{font-size:12px;font-weight:800;color:var(--ink3);}
+.dd-row{display:flex;justify-content:space-between;gap:10px;padding:6px 2px 0;font-size:12.5px;color:var(--ink2);}
+.dd-row em{font-style:normal;font-weight:800;color:#fff;white-space:nowrap;}
+
+/* ---- reorder controls ---- */
+.ordctl{display:flex;align-items:center;gap:7px;justify-content:flex-end;padding:10px 14px 0;}
+.ordctl.ex{padding:0 0 6px;}
+.ordn{flex:1;font-size:11px;font-weight:900;letter-spacing:.08em;color:#7fb0ff;}
+.ordb{width:38px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:#1b2a44;border:1px solid rgba(61,132,255,.45);color:#cfe0ff;font-size:13px;user-select:none;}
+.ordb.off{opacity:.25;pointer-events:none;}
+.ordb:active{transform:scale(.92);}
