@@ -49,3 +49,21 @@ body:has(#testBanner) .toast{top:calc(38px + env(safe-area-inset-top));}
 
 /* empty days before the 1st were taller than real days and pushed row 2 down */
 .mc-cell.empty,.wg-cell.empty{padding:0;font-size:0;}
+
+/* ---- v57: doing two workouts together ---- */
+.pairbar{margin:0 0 12px;padding:10px;border-radius:16px;background:#121821;border:1px solid #2a3442;}
+.pp-lbl{font-size:10px;font-weight:900;letter-spacing:.14em;color:var(--ink3);margin:0 2px 8px;}
+.pp-pills{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pp-pill{display:flex;align-items:center;gap:8px;padding:10px;border-radius:13px;border:1px solid #2a3442;background:#0f141b;cursor:pointer;min-width:0;}
+.pp-pill.on{cursor:default;box-shadow:0 0 0 1px rgba(255,255,255,.04) inset;}
+.pp-pill span{font-size:20px;flex:none;}
+.pp-pill div{min-width:0;}
+.pp-pill b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pp-pill em{display:block;font-style:normal;font-size:10.5px;font-weight:800;color:var(--ink3);margin-top:2px;}
+.pp-pill:not(.on) em{color:#9cc2ff;}
+.pp-add,.pp-start{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;margin:0 0 12px;padding:8px 12px;
+  border-radius:14px;cursor:pointer;border:1px dashed rgba(91,157,255,.5);background:rgba(61,132,255,.07);color:#9cc2ff;font-weight:850;font-size:13px;text-align:center;}
+.pp-start span{font-size:16px;}
+.pp-row{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-top:8px;border-radius:13px;border:1px solid #2a3442;background:#141a24;cursor:pointer;}
+.pp-row b{flex:1;font-size:14px;}
+.pp-chk{width:24px;height:24px;border-radius:8px;border:1.5px solid #3a4658;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#04170f;}
