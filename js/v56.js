@@ -34,7 +34,7 @@ finishWorkout = function(){
   try{
     if(w && !wkSession){
       const rec = (wkHist[w.id]||[]).find(h=>h && sid && h.sid===sid) || doneSess(w.id).slice(-1)[0];
-      if(rec && !rec.partial) setTimeout(()=>showFinish(w, rec, before), 250);
+      if(rec && !rec.partial) setTimeout(()=>{ if(window.__finishCollect) window.__finishCollect.push([w, rec, before]); else showFinish(w, rec, before); }, 250);
     }
   }catch(e){ console.warn(e); }
   return r;
@@ -55,7 +55,9 @@ openProject = function(id){
 /* ---------------------------------------------------------------------------
    3. Unfinished sessions
    --------------------------------------------------------------------------- */
-const partials = id => (wkHist[id]||[]).filter(h=>h && h.partial && !(wkSession && h.sid && h.sid===wkSession.sid));
+/* a session you're in the middle of (or its partner when doing two together) is never offered for tidying */
+window.liveSid = sid => !!sid && !!wkSession && (wkSession.sid===sid || !!(wkSession.pair && wkSession.pair.sid===sid));
+const partials = id => (wkHist[id]||[]).filter(h=>h && h.partial && !liveSid(h.sid));
 const allPartials = () => WK.flatMap(w=>partials(w.id).map(h=>({w,h})));
 const setsIn = h => (h.logged!=null ? h.logged : Object.values(h.entries||{}).filter(v=>v&&+v.reps>0).length);
 const repsIn = h => Object.values(h.entries||{}).reduce((a,v)=>a+(+(v&&v.reps)||0),0);
@@ -121,7 +123,7 @@ window.tidyDupes = function(onlyId){
   let n = 0;
   WK.forEach(w=>{ if(onlyId && w.id!==onlyId) return;
     wkHist[w.id] = (wkHist[w.id]||[]).filter(h=>{
-      const drop = h && h.partial && !(wkSession && h.sid===wkSession.sid) && doneSess(w.id).some(x=>x.d===h.d);
+      const drop = h && h.partial && !liveSid(h.sid) && doneSess(w.id).some(x=>x.d===h.d);
       if(drop) n++; return !drop; }); });
   refreshWk(onlyId);
   if(allPartials().filter(x=>!onlyId||x.w.id===onlyId).length) openTidy(onlyId||null); else closeAll();
