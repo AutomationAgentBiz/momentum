@@ -246,7 +246,7 @@ window.openCardioAdd = function(){
   if(d){ d.max = today; if(!d.value) d.value = today; }
   openSheet("cardioAdd");
   // wait for the slide-up to finish, otherwise the first keys you type go nowhere
-  setTimeout(()=>{ const m=$id("cdMi"); if(m) try{ m.focus({preventScroll:true}); }catch(e){ m.focus(); } }, 380);
+  if(!(window.matchMedia && matchMedia("(pointer:coarse)").matches)) setTimeout(()=>{ const m=$id("cdMi"); if(m) try{ m.focus({preventScroll:true}); }catch(e){ m.focus(); } }, 380);
 };
 
 /* ---------------------------------------------------------------------------

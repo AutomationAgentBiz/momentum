@@ -24,7 +24,9 @@ window.switchPair = function(){
   if(!paired()) return;
   try{ if(typeof restStop==="function") restStop(); }catch(e){}
   persistSession(false);                         // what you just did is written down first
-  swapOnly(); save(); renderSession(); window.scrollTo(0,0);
+  (window.__pairY = window.__pairY || {})[wkSession.id] = window.scrollY||0;   // remember where you were on this one
+  swapOnly(); save(); renderSession();
+  const y = (window.__pairY||{})[wkSession.id]||0; requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,y)));
 };
 
 /* ---- start two together ---- */
@@ -67,7 +69,7 @@ window.openPairPicker = function(preset){
         <button class="b b-blue" ${pick.length===2?"":"disabled style=\"opacity:.45\""} onclick="pairGo()">Start both</button>
       </div>`;
   };
-  window.pairTap = id => { if(pick.includes(id)) pick = pick.filter(x=>x!==id); else { pick.push(id); if(pick.length>2) pick.shift(); } draw(); };
+  window.pairTap = id => { if(pick.includes(id)) pick = pick.filter(x=>x!==id); else { if(pick.length>=2){ toast("Two at a time — untick one first"); return; } pick.push(id); } draw(); };
   window.pairGo = () => { if(pick.length===2) startPair(pick[0], pick[1]); };
   draw(); openSheet("node");
 };
@@ -169,10 +171,10 @@ leaveWorkout = async function(){
   const A = wkSession, n = setsLogged(A) + setsLogged(A.pair);
   if(!n){ wkSession = null; save(); renderWorkouts(); back(); return true; }
   const names = `${wkById(A.id).name} + ${wkById(A.pair.id).name}`;
-  const keep = await ask(`You've logged ${n} set${n===1?"":"s"} across ${names}.\n\nSave both to your history?`, "Save both");
+  const keep = await ask(`You've logged ${n} set${n===1?"":"s"} across ${names}.\n\nSave both to your history now?\n\n(Cancel keeps them open for later.)`, "Save both");
   if(keep){ finishWorkout(); back(); return true; }
   save(); renderWorkouts(); back();
-  toast("Left them open — they'll be waiting at the top");
+  toast("Kept open — they're at the top of Workouts");
   return true;
 };
 

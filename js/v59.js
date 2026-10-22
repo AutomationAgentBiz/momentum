@@ -119,16 +119,16 @@ window.openCdQuick = function(type){
     <p class="thin" style="margin:0 0 10px">${last ? `Last time: ${fl?(last.floors||0)+" floors":last.mi+" mi"}${last.min?` in ${last.min} min`:""} (${dayLabel(last.d)}).` : "First one — this sets the mark."}</p>
     <div class="two">
       <div><label class="f">${fl?"Floors":"Miles"}</label>
-        <input class="f" id="cqAmt" type="number" inputmode="decimal" step="${fl?1:0.1}" min="0" placeholder="${fl?(last&&last.floors)||"40":(last&&last.mi)||"2"}"></div>
+        <input class="f" id="cqAmt" type="number" inputmode="decimal" step="${fl?1:0.1}" min="0" placeholder="${fl?"e.g. 40":"e.g. 2.5"}"></div>
       <div><label class="f">Minutes <span style="opacity:.6">(optional)</span></label>
-        <input class="f" id="cqMin" type="number" inputmode="numeric" step="1" min="0" placeholder="${(last&&last.min)||"20"}"></div>
+        <input class="f" id="cqMin" type="number" inputmode="numeric" step="1" min="0" placeholder="optional"></div>
     </div>
     <div class="btns">
       <button class="b b-ghost" onclick="closeAll()">Cancel</button>
       <button class="b b-blue" onclick="cdQuickSave('${type}')">Save</button>
     </div>`;
   openSheet("node");
-  setTimeout(()=>{ const a=$id("cqAmt"); if(a) try{ a.focus({preventScroll:true}); }catch(e){ a.focus(); } }, 380);
+  if(!(window.matchMedia && matchMedia("(pointer:coarse)").matches)) setTimeout(()=>{ const a=$id("cqAmt"); if(a) try{ a.focus({preventScroll:true}); }catch(e){ a.focus(); } }, 380);
 };
 window.cdQuickSave = function(type){
   const o = cOpt(type), fl = o.unit==="fl";

@@ -743,7 +743,7 @@ function addToToday(id){
    Every write goes through save(). Storage is probed once and guarded, so if the
    browser won't allow it the app still runs exactly as before, in memory. */
 let STORE_OK=false, SAVE_KEY="momentum.v1", SCHEMA=2;
-const BUILD="v59 · Oct 22 · today's full workout checklist, treadmill + stairs";   // shown in Settings and the menu — bump this every release
+const BUILD="v61 · Oct 22 · timed moves, change your days, keyboard-safe forms, audit fixes";   // shown in Settings and the menu — bump this every release
 (function probe(){ try{ const k="__m"; window.localStorage.setItem(k,"1"); window.localStorage.removeItem(k); STORE_OK=true; }catch(e){ STORE_OK=false; } })();
 
 const SAVED=["tasks","nextId","PROJECTS","carryover","dayNote","missLog","WEBS","commitments",
@@ -4073,6 +4073,21 @@ function seedHistory(){
 }
 let trackerHelp=false;
 const MON3=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+/* v61: days the app wasn't opened leave no record — show them as empty squares in their
+   right place, instead of the grid silently skipping weeks. Display only; nothing is saved. */
+function fillDays(list){
+  const out=[]; const key=d=>ymd(d);
+  list.forEach((d,i)=>{
+    const prev=out[out.length-1];
+    if(prev && prev.date instanceof Date && !isNaN(prev.date) && d.date instanceof Date && !isNaN(d.date)){
+      const nx=new Date(prev.date); nx.setHours(12,0,0,0); nx.setDate(nx.getDate()+1);
+      let guard=0; while(key(nx)<key(d.date) && guard++<400){ out.push({date:new Date(nx), v:0, gap:true}); nx.setDate(nx.getDate()+1); }
+      if(key(prev.date)===key(d.date) && !d.today) return;
+    }
+    out.push(d);
+  });
+  return out;
+}
 function toggleGridHelp(){ trackerHelp=!trackerHelp; renderTracker(); }
 function renderTracker(){
   const box=$("trackerBody"); if(!box) return;
@@ -4105,8 +4120,8 @@ function renderTracker(){
 
   box.innerHTML = legend + list.map(t=>{
     const c=catOf(t.cat);
-    const days=[...(history[t.id]||[]).map(d=>({...d, date:(d.date instanceof Date)?d.date:new Date(d.date)})),
-                {date:new Date(), v:t.count, today:true}];
+    const days=fillDays([...(history[t.id]||[]).map(d=>({...d, date:(d.date instanceof Date)?d.date:new Date(d.date)})),
+                {date:new Date(), v:t.count, today:true}]);
     const pct=Math.min(100,Math.round(t.count/t.target*100));
     const hit=days.filter(d=>d.v>=t.target).length;
     const avg=(days.reduce((a,d)=>a+d.v,0)/days.length);
@@ -4294,7 +4309,8 @@ const KIT_ORDER=["vest","db","plate","ankle","band"];
    applied on its own — the app does not get to claim you wore a vest. */
 let exLoad={};
 let prepDone={};    // "lift-warm-3" -> true, just for today
-const defReps = e => (e && e.d) || 1;
+/* v60: a timed move (t:"s") keeps its target seconds in d — as a "rep" it counts once per round */
+const defReps = e => (e && e.t==="s") ? 1 : ((e && e.d) || 1);
 
 const wkById = id => WK.find(w=>w.id===id);
 const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -4985,6 +5001,7 @@ function persistSession(done){
     const sets=wkSession.entries[e.n]||[];
     const row={ reps:sets.reduce((a,c)=>a+(+c.reps||0),0),
                 wt: sets.reduce((m,c)=>Math.max(m,+c.wt||0),0) };
+    if(e.t==="s") row.sec = sets.reduce((m,c)=>Math.max(m,+c.sec||0),0);   // best hold, in seconds
     const L=loadOf(e.n);
     if(L && L.kit) row.ld={kit:L.kit, lb:+L.lb||0, lvl:L.lvl==null?1:L.lvl};
     return [e.n,row];
@@ -5174,8 +5191,9 @@ function openAddMove(){
     <div class="chips">
       <span class="chip on" id="amR" onclick="setMoveType('r')">Reps only</span>
       <span class="chip" id="amW" onclick="setMoveType('w')">Reps × weight</span>
+      <span class="chip" id="amS" onclick="setMoveType('s')">⏱ Timed</span>
     </div>
-    <label class="f" style="margin-top:12px">Usual reps</label>
+    <label class="f" style="margin-top:12px" id="amDefL">Usual reps</label>
     <input class="f" id="amDef" type="number" inputmode="numeric" min="1" value="10"
            title="What the + button jumps to on the first tap">
     <label class="f" style="margin-top:12px">Keep it?</label>
@@ -5191,9 +5209,12 @@ function openAddMove(){
   setTimeout(()=>{ const n=$("amName"); if(n) n.focus(); },140);
 }
 function setMoveType(t){ amType=t;
-  const a=$("amR"), b=$("amW");
+  const a=$("amR"), b=$("amW"), c=$("amS"), l=$("amDefL"), d=$("amDef");
   if(a) a.classList.toggle("on", t==="r");
-  if(b) b.classList.toggle("on", t==="w"); }
+  if(b) b.classList.toggle("on", t==="w");
+  if(c) c.classList.toggle("on", t==="s");
+  if(l) l.textContent = t==="s" ? "Time limit (seconds)" : "Usual reps";
+  if(d){ if(t==="s" && (+d.value||0)<=20) d.value=60; if(t!=="s" && (+d.value||0)>=45) d.value=10; } }
 function setMoveScope(k){ amKeep=k?1:0;
   const a=$("amOnce"), b=$("amKeep"), h=$("amHint");
   if(a) a.classList.toggle("on", !amKeep);
@@ -5207,7 +5228,7 @@ function addMove(){
   const n=($("amName").value||"").trim();
   if(!n){ $("amName").focus(); toast("Give it a name"); return; }
   if(sessEx().some(e=>e.n.toLowerCase()===n.toLowerCase())){ toast("That one's already on the list"); return; }
-  const d=Math.max(1,Math.min(999,+$("amDef").value||10));
+  const d=Math.max(1,Math.min(amType==="s"?3600:999,+$("amDef").value||(amType==="s"?60:10)));
   const last=baseSess(wkSession.id), carry=(last.entries[n]||{}).wt||0;
   wkSession.entries[n]=[];
   for(let r=0;r<wkSession.rounds;r++) wkSession.entries[n].push({reps:0, wt:carry});
@@ -5285,10 +5306,12 @@ function finishWorkout(){
   /* Stored two ways: entries is the whole session added up, so history and the
      Last: line keep working exactly as before. rounds keeps the round-by-round
      detail underneath it. */
-  const entries=Object.fromEntries(w.ex.map(e=>{
+  /* v60: every move in the session (one-offs too — they used to be dropped here) */
+  const entries=Object.fromEntries(sessEx().filter(e=>wkSession.entries[e.n]).map(e=>{
     const sets=wkSession.entries[e.n];
-    return [e.n,{reps:sets.reduce((a,c)=>a+c.reps,0),
-                 wt:Math.max(...sets.map(c=>c.wt))}];
+    const row={reps:sets.reduce((a,c)=>a+(+c.reps||0),0), wt:Math.max(0,...sets.map(c=>+c.wt||0))};
+    if(e.t==="s") row.sec=sets.reduce((m,c)=>Math.max(m,+c.sec||0),0);
+    return [e.n,row];
   }));
   wkHist[w.id]=wkHist[w.id]||[];
   /* This session has been writing itself down since the first set, so finish by
@@ -5297,7 +5320,7 @@ function finishWorkout(){
   if(!rec){
     wkHist[w.id].push({ago:0, d:wkSession.forDay||ymd(new Date()), vol:Math.round(t.vol), entries, partial:false});
   } else {
-    rec.vol=Math.round(t.vol); rec.entries=entries; rec.partial=false;
+    rec.vol=Math.round(t.vol); rec.entries=Object.assign({}, entries, rec.entries||{}); rec.partial=false;   // keep what was written as you went (loads, one-offs)
     rec.rounds=wkSession.entries ? JSON.parse(JSON.stringify(wkSession.entries)) : null;
   }
   wkHist[w.id].sort((a,b)=>String(a.d||"").localeCompare(String(b.d||"")));
@@ -5339,11 +5362,13 @@ function exRowHTML(e,i,redraw){
       <div class="ob${i===newEx.length-1?" off":""}" onclick="moveEx(${i},1,'${redraw}')">▼</div>
     </div>
     <input class="f" value="${esc(e.n)}" placeholder="Move ${i+1}" oninput="newEx[${i}].n=this.value">
-    <input class="f rp" type="number" inputmode="numeric" min="1" value="${e.d||""}" placeholder="reps"
-           title="Usual reps for this move" oninput="newEx[${i}].d=+this.value||0">
-    <div class="tg${e.t==="w"?" w":""}" onclick="newEx[${i}].t=newEx[${i}].t==='w'?'r':'w';window['${redraw}']()">${e.t==="w"?"Weight":"Reps"}</div>
+    <input class="f rp" type="number" inputmode="numeric" min="1" value="${e.d||""}" placeholder="${e.t==="s"?"sec":"reps"}"
+           title="${e.t==="s"?"Time limit in seconds":"Usual reps for this move"}" oninput="newEx[${i}].d=+this.value||0">
+    <div class="tg${e.t==="w"?" w":e.t==="s"?" s":""}" onclick="cycleExType(${i},'${redraw}')">${e.t==="w"?"Weight":e.t==="s"?"⏱ Sec":"Reps"}</div>
     <div class="xx" onclick="rmExAt(${i},'${redraw}')">✕</div></div>`;
 }
+function cycleExType(i,redraw){ const e=newEx[i]; const nx={r:"w",w:"s",s:"r"}[e.t]||"r";
+  if(nx==="s" && (+e.d||0)<=20) e.d=60; if(e.t==="s" && nx!=="s") e.d=10; e.t=nx; window[redraw](); }
 function moveEx(i,d,redraw){
   const j=i+d; if(j<0||j>=newEx.length) return;
   const [row]=newEx.splice(i,1); newEx.splice(j,0,row); window[redraw]();
@@ -5356,7 +5381,7 @@ function saveWorkoutEdit(){
   const name=$("ewName").value.trim();
   if(!name){ $("ewName").focus(); toast("Needs a name"); return; }
   const days=[...document.querySelectorAll("#ewDays .chip.on")].map(c=>c.textContent);
-  const ex=newEx.filter(e=>e.n.trim()).map(e=>({n:e.n.trim(),t:e.t,d:Math.max(1,+e.d||10)}));
+  const ex=newEx.filter(e=>e.n.trim()).map(e=>({n:e.n.trim(),t:e.t,d:Math.max(1,+e.d||(e.t==="s"?60:10))}));
   if(!ex.length){ toast("Keep at least one move"); return; }
   const oldDays=w.days.join("/");
   w.name=name; w.icon=$("ewIcon").value||w.icon;
@@ -5471,7 +5496,7 @@ function renderCardio(){
       ${sorted.slice().reverse().map(c=>{const t=CTYPE[c.type];
         return `<div class="lg" style="cursor:pointer" onclick="openRun(${c.id})">
           <div class="icon" style="background:${t.c}22">${t.i}</div>
-          <div class="lm"><b>${c.type} · ${cdAmt(c)}${c.hr?` · ${c.hr} bpm`:``}${c.src==="watch"?` ⌚`:``}</b><span>${daysAgo(c)===0?"Today":daysAgo(c)===1?"Yesterday":daysAgo(c)+" days ago"} · ${c.min} min</span></div>
+          <div class="lm"><b>${c.type} · ${cdAmt(c)}${c.hr?` · ${c.hr} bpm`:``}${c.src==="watch"?` ⌚`:``}</b><span>${daysAgo(c)===0?"Today":daysAgo(c)===1?"Yesterday":daysAgo(c)+" days ago"}${c.min?` · ${c.min} min`:""}</span></div>
           <div class="lr"><b style="color:${t.c}">${pace(c.mi,c.min)}</b><span>Pace</span></div>
           <div class="lx" onclick="event.stopPropagation();delCardio(${c.id})">✕</div>
         </div>`;}).join("")}
@@ -5653,7 +5678,7 @@ function rmEx(i){ rmExAt(i,'drawExRows'); }
 function addExRow(){ newEx.push({n:"",t:"r",d:10}); drawExRows(); }
 function saveWorkout(){
   const name=$("wkName").value.trim();
-  const ex=newEx.filter(e=>e.n.trim()).map(e=>({n:e.n.trim(),t:e.t,d:Math.max(1,+e.d||10)}));
+  const ex=newEx.filter(e=>e.n.trim()).map(e=>({n:e.n.trim(),t:e.t,d:Math.max(1,+e.d||(e.t==="s"?60:10))}));
   if(!name){ $("wkName").focus(); toast("Name it first"); return; }
   if(!ex.length){ toast("Add at least one move"); return; }
   const days=[...document.querySelectorAll("#wkDays .chip.on")].map(c=>c.textContent);

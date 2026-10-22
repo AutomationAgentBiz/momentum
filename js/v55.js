@@ -18,6 +18,7 @@ const shortDate = key => new Date(key+"T12:00:00").toLocaleDateString(undefined,
 const cardioOn = key => cardio.filter(c=>c.d===key);
 const cardioMiOn = key => cardioOn(key).reduce((a,c)=>a+(+c.mi||0),0);
 const cardioFlOn = key => cardioOn(key).reduce((a,c)=>a+(+c.floors||0),0);
+const monthFloors = m0 => { const p = ymd(m0).slice(0,7); return cardio.filter(c=>String(c.d||"").startsWith(p)).reduce((a,c)=>a+(+c.floors||0),0); };
 
 /* The first day you ever logged anything. Days before it can't be "missed". */
 function firstUseKey(){
@@ -65,8 +66,8 @@ function monthCalendar(){
       <span class="mc-n">${d}</span>
       ${miss.length && !did.length && !mi ? `<span class="mc-x">✕</span>` : ``}
       <div class="mc-dots">${dots}</div>
-      ${mi>=0.05 ? `<span class="mc-mi">${fmtMi(mi)}</span>` : cardioFlOn(key) ? `<span class="mc-mi">${cardioFlOn(key)}F</span>` : ``}
-      ${due.length && !did.length ? `<span class="mc-due" style="border-color:${due[0].fg}88"></span>` : ``}
+      ${(mi>=0.05||cardioFlOn(key)) ? `<span class="mc-mi">${[mi>=0.05?fmtMi(mi):"", cardioFlOn(key)?cardioFlOn(key)+"F":""].filter(Boolean).join("<br>")}</span>` : ``}
+      ${due.length && !did.length ? `<span class="mc-due" style="border-color:${due.length>1?"#9aa6b8":due[0].fg}88"></span>` : ``}
     </div>`);
   }
   const label = m0.toLocaleDateString(undefined,{month:"long", year: m0.getFullYear()===now.getFullYear()?undefined:"numeric"});
@@ -80,7 +81,7 @@ function monthCalendar(){
     <div class="mc-stats">
       <div><b style="color:#4fd6a5">${trained}</b><span>days trained</span></div>
       <div><b>${sessions}</b><span>workouts</span></div>
-      <div><b style="color:#d4bfff">${miles?fmtMi(miles).replace("M"," mi"):"0 mi"}</b><span>cardio</span></div>
+      <div><b style="color:#d4bfff">${miles?fmtMi(miles).replace("M"," mi"):(monthFloors(m0)?"":"0 mi")}${monthFloors(m0)?`${miles?" · ":""}${monthFloors(m0)} fl`:""}</b><span>cardio</span></div>
       <div><b style="color:${missed?'#ff9d9d':'var(--ink3)'}">${missed}</b><span>missed</span></div>
     </div>
     <div class="mc-dow">${DOW.map(d=>`<span>${d[0]}</span>`).join("")}</div>
@@ -133,7 +134,7 @@ window.openWkDay = function(key){
     ${runs.map(c=>{ const t=CTYPE[c.type]||{i:"🏃",c:"#b58cff"};
       return `<div class="dd-card" style="border-color:${t.c}66" onclick="closeAll();openRun(${c.id})">
         <div class="dd-top"><span class="dd-ic" style="background:${t.c}22">${t.i}</span><b>${esc(c.type)}</b>
-        <span class="dd-sum" style="color:${t.c}">${c.floors?c.floors+" floors":fmtMi(c.mi)} · ${c.min} min</span></div>
+        <span class="dd-sum" style="color:${t.c}">${c.floors?c.floors+" floors":fmtMi(c.mi)}${c.min?` · ${c.min} min`:""}</span></div>
         ${c.floors?"":`<div class="dd-row"><span>Pace</span><em>${pace(c.mi,c.min)}</em></div>`}</div>`; }).join("")}
     ${miss.map(w=>`<div class="dd-card miss"><div class="dd-top"><span class="dd-ic miss">✕</span>
         <b>${esc(w.name)}</b><span class="dd-sum">missed this week</span></div></div>`).join("")}
