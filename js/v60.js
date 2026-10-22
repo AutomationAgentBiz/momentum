@@ -137,7 +137,7 @@ renderSession = function(){
   const r = _renderSession60.apply(this, arguments);
   paintTimed(); if(run) tick();
   try{ const add = [...document.querySelectorAll("#wkBody button")].find(x=>/\+ Add a move/.test(x.textContent));
-    if(add && !document.querySelector(".tp-open")){ const t = document.createElement("button"); t.className = "b b-ghost tp-open";
+    if(false && add && !document.querySelector(".tp-open")){   // v62: replaced by the ⋯ menu on each move const t = document.createElement("button"); t.className = "b b-ghost tp-open";
       t.textContent = "⏱ Timed moves"; t.onclick = openTimedPicker; add.style.flex = "1"; t.style.flex = "1";
       add.parentElement.style.gap = "8px"; add.parentElement.appendChild(t); } }catch(e){}
   return r; };
@@ -168,10 +168,13 @@ document.addEventListener("focusout", ()=>setTimeout(kb, 150));
    --------------------------------------------------------------------------- */
 function weekCard(){
   const today = DOW[new Date().getDay()];
+  const CT = window.CARDIO_TYPES || [];
   const cols = DOW.map(d=>{
     const ws = WK.filter(w=>(w.days||[]).includes(d));
+    const cs = CT.filter(c=>((prefs.cardioDays||{})[c.type]||[]).includes(d));
     return `<div class="wkd${d===today?" today":""}"><span>${d[0]}</span>
-      ${ws.length ? ws.map(w=>`<i style="background:${w.bg};border-color:${w.fg}88" title="${esc(w.name)}">${w.icon}</i>`).join("") : `<em>rest</em>`}</div>`;
+      ${ws.length||cs.length ? ws.map(w=>`<i style="background:${w.bg};border-color:${w.fg}88" title="${esc(w.name)}">${w.icon}</i>`).join("")
+        + cs.map(c=>`<i style="background:${(CTYPE[c.type]||{c:"#b58cff"}).c}22;border-color:${(CTYPE[c.type]||{c:"#b58cff"}).c}88" title="${c.label}">${(CTYPE[c.type]||{i:"🏃"}).i}</i>`).join("") : `<em>rest</em>`}</div>`;
   }).join("");
   return `<div class="card wkweek">
     <div class="card-head"><span class="card-title">Your week</span><span class="link" onclick="openSchedule()">Change days</span></div>
@@ -181,14 +184,21 @@ function weekCard(){
 window.openSchedule = function(){
   const body = $id("nodeBody"); if(!body) return;
   const draft = Object.fromEntries(WK.map(w=>[w.id, (w.days||[]).slice()]));
+  const CT = window.CARDIO_TYPES || [];
+  const cdraft = Object.fromEntries(CT.map(c=>[c.type, ((prefs.cardioDays||{})[c.type]||[]).slice()]));
+  const ccol = t => (CTYPE[t]||{c:"#b58cff"}).c, cic = t => (CTYPE[t]||{i:"🏃"}).i;
   const draw = () => {
     body.innerHTML = `<h2 style="margin:0 0 4px">Change your days</h2>
-      <p class="thin" style="margin:0 0 10px">Tap a day to put a workout on it or take it off. This is your plan for every week.</p>
+      <p class="thin" style="margin:0 0 10px">Tap a day to put a workout or cardio on it, or take it off. This is your plan for every week.</p>
       <div class="sch">
         <div class="sch-row sch-head">${DOW.map(d=>`<b>${d}</b>`).join("")}</div>
         ${WK.map(w=>`<div class="sch-n">${w.icon} ${esc(w.name)}</div><div class="sch-row">
           ${DOW.map(d=>{ const on = draft[w.id].includes(d);
             return `<span class="sch-c${on?" on":""}" style="${on?`background:${w.fg};border-color:${w.fg}`:""}" onclick="schTap('${w.id}','${d}')">${on?"✓":""}</span>`; }).join("")}</div>`).join("")}
+        <div class="dp-sec" style="margin:14px 2px 2px">CARDIO</div>
+        ${CT.map(c=>`<div class="sch-n">${cic(c.type)} ${c.label}</div><div class="sch-row">
+          ${DOW.map(d=>{ const on = cdraft[c.type].includes(d);
+            return `<span class="sch-c${on?" on":""}" style="${on?`background:${ccol(c.type)};border-color:${ccol(c.type)}`:""}" onclick="schTapC('${c.type}','${d}')">${on?"✓":""}</span>`; }).join("")}</div>`).join("")}
       </div>
       <div class="wk-note" style="padding:12px 0 0">Just this once on a different day? No change needed — do it any day and it counts for that week.</div>
       <div class="btns">
@@ -196,6 +206,8 @@ window.openSchedule = function(){
         <button class="b b-primary" onclick="schSave()">Save my week</button>
       </div>`;
   };
+  window.schTapC = (t, d) => { const a = cdraft[t]; const i = a.indexOf(d); if(i>-1) a.splice(i,1); else a.push(d);
+    a.sort((x,y)=>DOW.indexOf(x)-DOW.indexOf(y)); draw(); };
   window.schTap = (id, d) => { const a = draft[id]; const i = a.indexOf(d); if(i>-1) a.splice(i,1); else a.push(d);
     a.sort((x,y)=>DOW.indexOf(x)-DOW.indexOf(y)); draw(); };
   window.schSave = () => {
@@ -203,10 +215,13 @@ window.openSchedule = function(){
     if(empty.length){ toast(`${empty[0].name} needs at least one day`); return; }
     const old = Object.fromEntries(WK.map(w=>[w.id, {days:(w.days||[]).slice(), perWeek:w.perWeek}]));
     const changed = [];
+    const oldC = JSON.parse(JSON.stringify(prefs.cardioDays||{}));
+    if(JSON.stringify(oldC)!==JSON.stringify(Object.fromEntries(Object.entries(cdraft).filter(([,v])=>v.length)))){
+      prefs.cardioDays = Object.fromEntries(Object.entries(cdraft).filter(([,v])=>v.length)); changed.push("Cardio days updated"); }
     WK.forEach(w=>{ const nd = draft[w.id]; if(nd.join()!==(w.days||[]).join()){ changed.push(`${w.name} → ${nd.join(", ")}`); w.days = nd.slice(); w.perWeek = nd.length; } });
     save(); closeAll(); renderWorkouts();
     if(changed.length) toastUndo(changed.length===1 ? changed[0] : `${changed.length} workouts moved`, ()=>{
-      WK.forEach(w=>{ if(old[w.id]){ w.days = old[w.id].days; w.perWeek = old[w.id].perWeek; } }); save(); renderWorkouts(); });
+      WK.forEach(w=>{ if(old[w.id]){ w.days = old[w.id].days; w.perWeek = old[w.id].perWeek; } }); prefs.cardioDays = oldC; save(); renderWorkouts(); });
     else toast("No changes");
   };
   draw(); openSheet("node");

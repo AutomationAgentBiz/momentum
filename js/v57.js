@@ -138,9 +138,11 @@ finishWorkout = function(){
     if(got.length>1) showFinishMany(got); else if(got.length===1) showFinish(...got[0]); }, 450);
 };
 
+const repsOnly = (w, entries) => Object.entries(entries||{}).reduce((a,[n,v])=>{ const e=(w.ex||[]).find(x=>x.n===n);
+  return a + (e && e.t==="s" ? 0 : (+(v&&v.reps)||0)); }, 0);
 function finishBlock([w, rec, before]){
-  const reps = Object.values(rec.entries||{}).reduce((a,v)=>a+(+(v&&v.reps)||0),0);
-  const was = before && before.entries ? Object.values(before.entries).reduce((a,v)=>a+(+(v&&v.reps)||0),0) : 0;
+  const reps = repsOnly(w, rec.entries);
+  const was = before && before.entries ? repsOnly(w, before.entries) : 0;
   const diff = reps - was, pct = was ? Math.round(diff/was*100) : null;
   return `<div class="dd-card" style="border-color:${w.fg}66">
     <div class="dd-top"><span class="dd-ic" style="background:${w.bg}">${w.icon}</span><b>${esc(w.name)}</b>
@@ -151,8 +153,8 @@ function finishBlock([w, rec, before]){
 }
 window.showFinishMany = function(list){
   const body = $id("nodeBody"); if(!body) return;
-  const beat = list.filter(([w,rec,before])=>before&&before.entries&&
-    Object.values(rec.entries||{}).reduce((a,v)=>a+(+v.reps||0),0) > Object.values(before.entries).reduce((a,v)=>a+(+v.reps||0),0)).length;
+  const beat = list.filter(([w,rec,before])=>before&&before.entries&&repsOnly(w,before.entries)>0&&
+    repsOnly(w,rec.entries) > repsOnly(w,before.entries)).length;
   body.innerHTML = `<div style="text-align:center;padding:4px 0 6px">
       <div style="font-size:30px">${list.map(x=>x[0].icon).join(" ")}</div>
       <h2 style="margin:4px 0 2px">Both done</h2>

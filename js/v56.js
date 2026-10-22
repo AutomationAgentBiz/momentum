@@ -196,7 +196,8 @@ window.innerBack = function(){
    --------------------------------------------------------------------------- */
 function showFinish(w, rec, before){
   const body = $id("nodeBody"); if(!body) return;
-  const reps = repsIn(rec), was = before && before.entries ? repsIn(before) : 0;
+  const notTimed = h => Object.entries((h&&h.entries)||{}).reduce((a,[n,v])=>{ const e=w.ex.find(x=>x.n===n); return a+(e&&e.t==="s"?0:(+(v&&v.reps)||0)); },0);
+  const reps = notTimed(rec), was = before && before.entries ? notTimed(before) : 0;
   const diff = reps - was, pct = was ? Math.round(diff/was*100) : null;
   const rows = w.ex.map(e=>{ const a=(rec.entries||{})[e.n]||{reps:0,wt:0}, b=before&&before.entries?before.entries[e.n]:null;
     const d = b ? (+a.reps||0)-(+b.reps||0) : null;
@@ -241,7 +242,7 @@ repStep = function(i, d){
 /* ---------------------------------------------------------------------------
    6. Log a run
    --------------------------------------------------------------------------- */
-window.openCardioAdd = function(){
+window.openCardioAdd = function(){ if(window.openCdQuick) return openCdQuick();
   const d = $id("cdDay"); const today = ymd(new Date());
   if(d){ d.max = today; if(!d.value) d.value = today; }
   openSheet("cardioAdd");

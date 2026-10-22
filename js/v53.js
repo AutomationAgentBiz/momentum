@@ -733,7 +733,7 @@ function tidyProgress(){
 }
 function tidyTracker(){
   const box = document.getElementById("trackerBody"); if(!box || box.querySelector(".v53empty")) return;
-  const anyHist = tasks.filter(isCounter).some(t=>(history[t.id]||[]).some(d=>d.v>0));
+  const anyHist = tasks.filter(isCounter).some(t=>(history[t.id]||[]).some(d=>d.v>0) || t.count>0);   // today counts too
   if(anyHist) return;
   const n = document.createElement("div"); n.className = "card";
   n.innerHTML = `<div class="v53empty" style="padding-top:14px">Nothing logged yet. Tap <b>+</b> or <b>½</b> on a counter on

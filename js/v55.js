@@ -55,8 +55,9 @@ function monthCalendar(){
     const miss = WK.filter(w=>missedOn(w, dt, key, today, first));
     const future = key > today;
     const due = future ? WK.filter(w=>(w.days||[]).includes(DOW[dt.getDay()])) : [];
+    const dueC = future ? Object.entries(prefs.cardioDays||{}).filter(([,ds])=>(ds||[]).includes(DOW[dt.getDay()])).map(([t])=>t) : [];
     if(did.length || mi){ trained++; }
-    sessions += did.length; miles += mi>=0.05 ? mi : 0; missed += miss.length;
+    sessions += did.length; miles += mi>=0.05 ? mi : 0; missed += (miss.length && !did.length && !mi) ? miss.length : 0;
     const dots = did.map(w=>`<i class="mc-dot" style="background:${w.fg}" title="${esc(w.name)}"></i>`).join("");
     const cls = ["mc-cell", did.length||mi ? "did" : "", miss.length && !did.length && !mi ? "miss" : "",
                  key===today ? "today" : "", future ? "future" : ""].filter(Boolean).join(" ");
@@ -67,7 +68,7 @@ function monthCalendar(){
       ${miss.length && !did.length && !mi ? `<span class="mc-x">✕</span>` : ``}
       <div class="mc-dots">${dots}</div>
       ${(mi>=0.05||cardioFlOn(key)) ? `<span class="mc-mi">${[mi>=0.05?fmtMi(mi):"", cardioFlOn(key)?cardioFlOn(key)+"F":""].filter(Boolean).join("<br>")}</span>` : ``}
-      ${due.length && !did.length ? `<span class="mc-due" style="border-color:${due.length>1?"#9aa6b8":due[0].fg}88"></span>` : ``}
+      ${(due.length||dueC.length) && !did.length ? `<span class="mc-due" style="border-color:${due.length+dueC.length>1?"#9aa6b8":due.length?due[0].fg:"#b58cff"}88"></span>` : ``}
     </div>`);
   }
   const label = m0.toLocaleDateString(undefined,{month:"long", year: m0.getFullYear()===now.getFullYear()?undefined:"numeric"});
@@ -215,14 +216,14 @@ function cardioCard(){
   return `<div class="card wk" id="cardioCard">
     <div class="wk-head">
       <div class="icon" style="background:#1f1733">🏃</div>
-      <div class="wk-t"><b>Cardio</b><span style="color:#b58cff">Jogs, runs, walks, rides · ${fmtMi(wkMi).replace("M"," mi")} this week</span></div>
+      <div class="wk-t"><b>Cardio</b><span style="color:#b58cff">Treadmill, runs, rides, stairs · ${fmtMi(wkMi).replace("M"," mi")} this week</span></div>
       <div style="text-align:right"><div style="font-size:13px;font-weight:800;color:var(--ink2)">${last?agoLabel(daysAgo(last)):"never"}</div>
         <div style="font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);font-weight:800;margin-top:2px">Last run</div></div>
     </div>
     ${g.html}
     <div class="wk-row">
       <button class="b b-ghost" onclick="openCardioScreen()">History</button>
-      <button class="b b-blue" onclick="openCardioAdd()">+ Log a run</button>
+      <button class="b b-blue" onclick="openCdQuick()">+ Log cardio</button>
     </div>
   </div>`;
 }

@@ -743,7 +743,7 @@ function addToToday(id){
    Every write goes through save(). Storage is probed once and guarded, so if the
    browser won't allow it the app still runs exactly as before, in memory. */
 let STORE_OK=false, SAVE_KEY="momentum.v1", SCHEMA=2;
-const BUILD="v61 · Oct 22 · timed moves, change your days, keyboard-safe forms, audit fixes";   // shown in Settings and the menu — bump this every release
+const BUILD="v62 · Oct 22 · one cardio logger, cardio on your week";   // shown in Settings and the menu — bump this every release
 (function probe(){ try{ const k="__m"; window.localStorage.setItem(k,"1"); window.localStorage.removeItem(k); STORE_OK=true; }catch(e){ STORE_OK=false; } })();
 
 const SAVED=["tasks","nextId","PROJECTS","carryover","dayNote","missLog","WEBS","commitments",
@@ -1812,7 +1812,7 @@ function openDetail(id){
   $("detailBody").innerHTML=`
     ${resumeBanner("task",t.id)}
     <div style="display:flex;align-items:center;gap:11px;margin-top:4px">
-      <div class="icon" style="background:${c.bg};width:42px;height:42px;border-radius:12px;font-size:19px">${c.icon}</div>
+      <div class="icon" style="background:${c.bg};width:42px;height:42px;border-radius:12px;font-size:19px">${taskIcon(t,c)}</div>
       <div><h2 style="margin:0">${esc(t.name)}</h2>
       <div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:${c.fg};margin-top:3px">${c.label}</div></div>
     </div>
@@ -5497,10 +5497,10 @@ function renderCardio(){
         return `<div class="lg" style="cursor:pointer" onclick="openRun(${c.id})">
           <div class="icon" style="background:${t.c}22">${t.i}</div>
           <div class="lm"><b>${c.type} · ${cdAmt(c)}${c.hr?` · ${c.hr} bpm`:``}${c.src==="watch"?` ⌚`:``}</b><span>${daysAgo(c)===0?"Today":daysAgo(c)===1?"Yesterday":daysAgo(c)+" days ago"}${c.min?` · ${c.min} min`:""}</span></div>
-          <div class="lr"><b style="color:${t.c}">${pace(c.mi,c.min)}</b><span>Pace</span></div>
+          <div class="lr"><b style="color:${t.c}">${c.type==="Bike"&&c.mi&&c.min?(c.mi/(c.min/60)).toFixed(1)+" mph":c.floors?"—":pace(c.mi,c.min)}</b><span>${c.type==="Bike"?"Speed":"Pace"}</span></div>
           <div class="lx" onclick="event.stopPropagation();delCardio(${c.id})">✕</div>
         </div>`;}).join("")}
-      <div class="wk-row"><button class="b b-blue" onclick="openCardioAdd()">+ Log a run</button></div>
+      <div class="wk-row"><button class="b b-blue" onclick="openCdQuick()">+ Log cardio</button></div>
     </div>`;
 }
 /* Heart rate over one run. One series, so no legend — the title names it.
@@ -6318,7 +6318,7 @@ const HOWTO={
   planner:{what:"Problem Solver. Turns a rough problem into five sharper prompts, then blends the answers you pick into a plan.",
     how:["Menu → Problem Solver","Type the problem, or tap something under Pull from your app — braindump items, owed tasks, stuck work and projects are all listed","Pick several and they get combined into one problem","Hit Build the web","Answer the five questions it asks","Hit Build 5 better prompts, then Run all","Pick as many routes as you want, then Combine them into a plan"]},
   workouts:{what:"Two tabs — Strength (your splits, reps and weight) and Cardio (runs, rides and pace).",
-    how:["Menu → Workouts","Tap Start on a split to log reps and weight","Cardio tab → Log a run for distance and time","+ Add a workout at the bottom of Strength builds your own"]},
+    how:["Menu → Workouts","Tap Start on a split to log reps and weight","Cardio card → + Log cardio (treadmill, run, walk, bike, stairs)","+ Add a workout at the bottom of Strength builds your own"]},
   meals:{what:"Calories and protein against your daily targets, with a 7-day chart and everything you ate by meal.",
     how:["Menu → Meals","+ Log food takes a name, calories and protein","Targets live in Settings → Daily targets"]},
   projects:{what:"Projects grouped by category, each with a goal, status, its tasks and any Problem Solver webs tied to it.",
@@ -8566,7 +8566,7 @@ function calRow(t,key){
   const bl=blockers(t), waiting = bl && !bl.done;
   const overdue = t.due && t.due<TODAY_KEY && !t.done;
   return `<div class="crow${t.done?" done":""}" onclick="calTaskMenu(${t.id})">
-    <div class="icon" style="background:${c.bg};width:28px;height:28px;border-radius:8px;font-size:12px">${c.icon}</div>
+    <div class="icon" style="background:${c.bg};width:28px;height:28px;border-radius:8px;font-size:12px">${taskIcon(t,c)}</div>
     <div style="flex:1;min-width:0">
       <div class="cn">${esc(t.name)}</div>
       <div class="cm">${t.est||30}m
@@ -8637,11 +8637,18 @@ function planWeek(){
   const days=week.filter(d=>ymd(d)>=TODAY_KEY);          // only days we can still place on
   if(!days.length){ toast("That week's already gone"); return; }
   const lo=ymd(week[0]), hi=ymd(week[6]);
-  const pool=tasks.filter(t=>!t.routine && !t.done && isActionable(t) && (!t.date || (t.date>=lo && t.date<=hi)));
+  /* v62: a task you put on a day yourself stays on that day — the planner only places
+     tasks that have no date yet, and works around the ones that do. */
+  const fixed=tasks.filter(t=>!t.routine && !t.done && isActionable(t) && t.date && t.date>=lo && t.date<=hi);
+  const pool=tasks.filter(t=>!t.routine && !t.done && isActionable(t) && !t.date);
   const parked=tasks.filter(t=>!t.routine && !t.done && !isActionable(t) && (!t.date || (t.date>=lo && t.date<=hi)));
   if(!pool.length){ toast("Nothing to place"); return; }
 
   const room={}; days.forEach(d=>room[ymd(d)]=capacity(d));
+  // today only has what's left of the work day
+  if(room[TODAY_KEY]!=null){ const now=new Date(), endMin=workHours.end*60, nowMin=now.getHours()*60+now.getMinutes();
+    room[TODAY_KEY]=Math.max(0, Math.min(room[TODAY_KEY], Math.round((endMin-Math.max(nowMin, workHours.start*60))*0.75))); }
+  fixed.forEach(t=>{ if(room[t.date]!=null) room[t.date]-=(t.est||30); });
   const placed={}, moves=[], warn=[], overflow=[];
   const sorted=[...pool].sort((a,b)=>planScore(b)-planScore(a));
 
@@ -8713,7 +8720,7 @@ function drawPlan_week(){
       cramming a day. <b style="color:#fff">Nothing has moved yet.</b></p>
     <div class="loadbars">
       ${d.days.map(k=>{const dt=new Date(k+"T12:00:00"),cap=capacity(dt);
-        const used=cap-d.room[k], pct=Math.round(used/cap*100);
+        const used=cap-d.room[k], pct=Math.round(used/(cap/0.75)*100);   // share of the whole day — 75% is the cap
         const tone=pct>95?"#ff6b6b":pct>75?"#ff9d4d":"#12c98a";
         return `<div class="lb"><i style="height:${Math.max(4,Math.min(100,pct))}%;background:${tone}"></i>
           <em>${dayName(dt)[0]}</em><small>${pct}%</small></div>`;}).join("")}
@@ -8724,17 +8731,20 @@ function drawPlan_week(){
         <div style="flex:1;min-width:0">
           <div style="font-size:13.5px;font-weight:650">${esc(m.name)}</div>
           <div style="font-size:11px;color:var(--ink3);margin-top:3px">
-            ${m.from?dLabel(new Date(m.from+"T12:00:00")):"Unscheduled"} → <b style="color:#7fb0ff">${dLabel(new Date(m.to+"T12:00:00"))}</b></div>
+            ${m.from?dLabel(new Date(m.from+"T12:00:00")):"Unscheduled"} → <b style="color:#7fb0ff">${m.to?dLabel(new Date(m.to+"T12:00:00")):"Unscheduled"}</b></div>
           <div style="font-size:11px;color:#8d99ab;margin-top:3px;font-style:italic">${m.why}</div>
         </div></div>`).join("")}`
       :`<div class="empty">Everything's already where it should be.</div>`}
     ${d.warn.length?`<div class="obs" style="margin-top:14px">${d.warn.map(w=>`<div style="padding:3px 0">⚠ ${w}</div>`).join("")}</div>`:``}`;
 }
 function applyPlan(){
+  const before=planDraft.moves.map(m=>{ const t=tasks.find(x=>x.id===m.id); return t?{id:t.id,date:t.date,sched:t.sched}:null; }).filter(Boolean);
   planDraft.moves.forEach(m=>{ const t=tasks.find(x=>x.id===m.id); if(t) reschedule(t,m.to); });
   const n=planDraft.moves.length; planDraft=null; save();
   closeAll(); render(); renderCal(); renderProjects();
-  toast(n?`${n} task${n===1?"":"s"} scheduled`:"Nothing to change");
+  const redraw=()=>{ save(); render(); renderCal(); renderProjects(); };
+  if(n) toastUndo(`${n} task${n===1?"":"s"} scheduled`, ()=>{ before.forEach(b=>{ const t=tasks.find(x=>x.id===b.id); if(t){ t.date=b.date; t.sched=b.sched; } }); redraw(); });
+  else toast("Nothing to change");
 }
 
 /* ================= TALK TO MY CALENDAR ================= */
@@ -9248,7 +9258,7 @@ function renderRoutines(){
         const hit=h.filter(x=>x.v>=(t.target||1)).length;
         return `<div style="padding:11px 16px;position:relative;border-top:1px solid var(--line)">
           <div style="display:flex;align-items:center;gap:11px">
-            <div class="icon" style="background:${c.bg};opacity:${t.paused?.4:1}">${c.icon}</div>
+            <div class="icon" style="background:${c.bg};opacity:${t.paused?.4:1}">${taskIcon(t,c)}</div>
             <div style="flex:1;min-width:0">
               <div style="font-size:14.5px;font-weight:700;${t.paused?'color:var(--ink3)':''}">${esc(t.name)}</div>
               <div style="font-size:11px;color:var(--ink3);margin-top:3px">${isSkippedToday(t)?`<span style="color:#ffb26b">Skipped today</span> · `:``}${t.freq} · next ${nextDue(t)}${isCounter(t)?` · ${t.target} ${unitOf(t)} a day`:``}</div>
@@ -9404,7 +9414,7 @@ function renderProgress(){
         const pc=h.length?Math.round(hit/h.length*100):0;const c=catOf(t.cat);
         return `<div style="padding:9px 16px">
           <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600">
-            <span>${c.icon}</span><span style="flex:1">${esc(t.name)}</span>
+            <span>${taskIcon(t,c)}</span><span style="flex:1">${esc(t.name)}</span>
             <b style="color:${pc>=70?'#4fd6a5':pc>=40?'#ffb26b':'#ff8f8f'}">${pc}%</b></div>
           <div class="tk-bar" style="margin:7px 0 0;height:5px"><i style="width:${pc}%;background:${c.fg}"></i></div>
         </div>`;}).join("")}

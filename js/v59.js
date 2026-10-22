@@ -51,14 +51,17 @@ window.openDayPlan = function(){
   const body = $id("nodeBody"); if(!body) return;
   const dow = DOW[new Date().getDay()];
   const remembered = (prefs.wkPlanByDow||{})[dow];
+  // what your week says for today (lifting + cardio); if nothing is scheduled, what you did last time on this day
+  const scheduled = WK.filter(w=>(w.days||[]).includes(dow)).map(w=>({k:"wk", id:w.id}))
+    .concat(CARDIO.filter(c=>((prefs.cardioDays||{})[c.type]||[]).includes(dow)).map(c=>({k:"cd", type:c.type})));
   let pick = plan() ? plan().items.slice()
-    : remembered ? remembered.filter(it=>it.k!=="wk" || wkById(it.id))
-    : WK.filter(w=>(w.days||[]).includes(dow)).map(w=>({k:"wk", id:w.id}));
+    : scheduled.length ? scheduled
+    : remembered ? remembered.filter(it=>it.k!=="wk" || wkById(it.id)) : [];
   const has = it => pick.some(x=>x.k===it.k && (x.k==="wk" ? x.id===it.id : x.type===it.type));
   const draw = () => {
     body.innerHTML = `<h2 style="margin:0 0 4px">Today's full workout</h2>
       <p class="thin" style="margin:0 0 6px">Tick everything you'll do today. It becomes a checklist that stays with you
-        until it's all logged.${remembered && !plan() ? ` Ticked what you did last ${dow}.` : ""}</p>
+        until it's all logged.${!plan() && scheduled.length ? ` Already ticked what's on your week for ${dow}.` : ""}</p>
       <div class="dp-sec">LIFTING</div>
       ${WK.map(w=>{ const on = has({k:"wk",id:w.id});
         return `<div class="pp-row${on?" on":""}" style="${on?`border-color:${w.fg};background:${w.bg}`:""}" onclick="dpTap('wk','${w.id}')">
@@ -110,37 +113,60 @@ function refresh(){
 /* ---------------------------------------------------------------------------
    Quick log for cardio (treadmill miles, stair floors)
    --------------------------------------------------------------------------- */
+window.CARDIO_TYPES = CARDIO;
 window.openCdQuick = function(type){
   const body = $id("nodeBody"); if(!body) return;
+  if(!type || !CARDIO.some(c=>c.type===type)){
+    const lastAny = [...cardio].sort((a,b)=>String(b.d).localeCompare(String(a.d)))[0];
+    type = (lastAny && CARDIO.some(c=>c.type===lastAny.type)) ? lastAny.type : "Treadmill";
+  }
   const o = cOpt(type), p = plan(), d = p ? p.d : todayKey();
   const last = [...cardio].filter(c=>c.type===type).sort((a,b)=>String(b.d).localeCompare(String(a.d)))[0];
   const fl = o.unit==="fl";
-  body.innerHTML = `<h2 style="margin:0 0 4px">${cIcon(type)} Log ${o.label.toLowerCase()}</h2>
-    <p class="thin" style="margin:0 0 10px">${last ? `Last time: ${fl?(last.floors||0)+" floors":last.mi+" mi"}${last.min?` in ${last.min} min`:""} (${dayLabel(last.d)}).` : "First one — this sets the mark."}</p>
+  // only carry numbers over when you're switching type inside this same open form — never from an earlier entry,
+  // and never miles into floors (or back)
+  const openNow = $id("node").classList.contains("on") && $id("cqAmt");
+  const prevFl = openNow && /floor/i.test((document.querySelector('#nodeBody label.f')||{}).textContent||"");
+  const keepAmt = openNow && prevFl===(o.unit==="fl") ? $id("cqAmt").value : "";
+  const keepMin = openNow ? ($id("cqMin")||{}).value||"" : "", keepDay = openNow ? ($id("cqDay")||{}).value||"" : "";
+  body.innerHTML = `<h2 style="margin:0 0 8px">Log cardio</h2>
+    <div class="cq-types">${CARDIO.map(c=>`<span class="cq-t${c.type===type?" on":""}" style="${c.type===type?`border-color:${cCol(c.type)};background:${cCol(c.type)}22`:""}" onclick="openCdQuick('${c.type}')">${cIcon(c.type)} ${c.label}</span>`).join("")}</div>
+    <p class="thin" style="margin:10px 0 10px">${last ? `Last time: ${fl?(last.floors||0)+" floors":last.mi+" mi"}${last.min?` in ${last.min} min`:""} (${dayLabel(last.d)}).` : "First one — this sets the mark."}</p>
     <div class="two">
       <div><label class="f">${fl?"Floors":"Miles"}</label>
         <input class="f" id="cqAmt" type="number" inputmode="decimal" step="${fl?1:0.1}" min="0" placeholder="${fl?"e.g. 40":"e.g. 2.5"}"></div>
       <div><label class="f">Minutes <span style="opacity:.6">(optional)</span></label>
         <input class="f" id="cqMin" type="number" inputmode="numeric" step="1" min="0" placeholder="optional"></div>
     </div>
+    <label class="f">Day</label>
+    <div class="cq-days"><span class="chip" onclick="cqDay(0)">Today</span><span class="chip" onclick="cqDay(1)">Yesterday</span>
+      <input class="f" id="cqDay" type="date" max="${todayKey()}" value="${d}" oninput="cqDay()"></div>
     <div class="btns">
       <button class="b b-ghost" onclick="closeAll()">Cancel</button>
       <button class="b b-blue" onclick="cdQuickSave('${type}')">Save</button>
     </div>`;
-  openSheet("node");
+  if(keepAmt && $id("cqAmt")) $id("cqAmt").value = keepAmt;
+  if(keepMin && $id("cqMin")) $id("cqMin").value = keepMin;
+  if(keepDay && $id("cqDay")) $id("cqDay").value = keepDay;
+  if(!$id("node").classList.contains("on")) openSheet("node");
+  cqDay();
   if(!(window.matchMedia && matchMedia("(pointer:coarse)").matches)) setTimeout(()=>{ const a=$id("cqAmt"); if(a) try{ a.focus({preventScroll:true}); }catch(e){ a.focus(); } }, 380);
 };
+window.cqDay = function(back){ const el=$id("cqDay"); if(!el) return;
+  if(back!=null){ const x=new Date(); x.setDate(x.getDate()-back); el.value=ymd(x); }
+  document.querySelectorAll(".cq-days .chip").forEach((c,i)=>{ const x=new Date(); x.setDate(x.getDate()-i); c.classList.toggle("on", el.value===ymd(x)); }); };
 window.cdQuickSave = function(type){
   const o = cOpt(type), fl = o.unit==="fl";
   const amt = parseFloat(($id("cqAmt")||{}).value), min = Math.max(0, Math.round(parseFloat(($id("cqMin")||{}).value)||0));
   if(!(amt>0)){ toast(fl ? "How many floors?" : "How many miles?"); return; }
-  const p = plan(), d = p ? p.d : todayKey();
+  const p = plan(); let d = (($id("cqDay")||{}).value) || (p ? p.d : todayKey());
+  if(d > todayKey()){ toast("That day is in the future"); return; }
   const rec = {id:newId(), ago:0, d, type, mi: fl ? 0 : +amt.toFixed(2), min};
   if(fl) rec.floors = Math.round(amt);
   cardio.push(rec);
   if(p && p.skip) p.skip = p.skip.filter(t=>t!==type);
   save(); closeAll(); refresh();
-  toastUndo(`${cIcon(type)} ${fl?rec.floors+" floors":rec.mi+" mi"} logged`, ()=>{ cardio = cardio.filter(c=>c.id!==rec.id); save(); refresh(); });
+  toastUndo(`${cIcon(type)} ${fl?rec.floors+" floors":rec.mi+" mi"} logged${d!==todayKey()?" for "+dayLabel(d):""}`, ()=>{ cardio = cardio.filter(c=>c.id!==rec.id); save(); refresh(); });
   setTimeout(nudgeAllDone, 300);
 };
 function nudgeAllDone(){
@@ -199,11 +225,7 @@ renderWorkouts = function(){
       if(cal) cal.before(card); else body.insertBefore(card, body.firstChild);   // first thing you see
       // stairs can be logged from the cardio card too
       const cc = $id("cardioCard");
-      if(cc && !cc.querySelector(".dp-stairs")){
-        const row = cc.querySelector(".wk-row");
-        if(row){ const s = document.createElement("button"); s.className = "b b-ghost dp-stairs"; s.textContent = "+ Stairs";
-          s.onclick = () => openCdQuick("Stairs"); row.appendChild(s); }
-      }
+      if(cc){ cc.querySelectorAll('button[onclick="openCardioAdd()"]').forEach(b=>{ b.textContent = "+ Log cardio"; b.setAttribute("onclick","openCdQuick()"); }); }
     }
   }catch(e){ console.warn(e); }
   return r;
@@ -235,7 +257,11 @@ renderSession = function(){
    --------------------------------------------------------------------------- */
 const _finish59 = finishWorkout;
 finishWorkout = function(){
+  const ids = wkSession ? [wkSession.id].concat(wkSession.pair ? [wkSession.pair.id] : []) : [];
   const r = _finish59.apply(this, arguments);
+  try{ const p = plan(); if(p){ let add = false;
+    ids.forEach(id=>{ if(!p.items.some(it=>it.k==="wk"&&it.id===id) && doneSess(id).some(h=>h.d===p.d)){ p.items.unshift({k:"wk", id}); add = true; } });
+    if(add) save(); } }catch(e){}
   setTimeout(()=>{
     try{
       const p = plan(); if(!p) return;
