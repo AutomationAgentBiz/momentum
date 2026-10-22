@@ -17,6 +17,7 @@ const fmtMi = mi => { const n = Math.round((+mi||0)*10)/10; return (n%1===0 ? n.
 const shortDate = key => new Date(key+"T12:00:00").toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"});
 const cardioOn = key => cardio.filter(c=>c.d===key);
 const cardioMiOn = key => cardioOn(key).reduce((a,c)=>a+(+c.mi||0),0);
+const cardioFlOn = key => cardioOn(key).reduce((a,c)=>a+(+c.floors||0),0);
 
 /* The first day you ever logged anything. Days before it can't be "missed". */
 function firstUseKey(){
@@ -49,12 +50,12 @@ function monthCalendar(){
   for(let d=1; d<=mEnd.getDate(); d++){
     const dt = new Date(m0.getFullYear(), m0.getMonth(), d), key = ymd(dt);
     const did = WK.filter(w=>doneSess(w.id).some(h=>h.d===key));
-    const mi = cardioMiOn(key);
+    const mi = cardioMiOn(key) || (cardioOn(key).length ? 0.0001 : 0);
     const miss = WK.filter(w=>missedOn(w, dt, key, today, first));
     const future = key > today;
     const due = future ? WK.filter(w=>(w.days||[]).includes(DOW[dt.getDay()])) : [];
     if(did.length || mi){ trained++; }
-    sessions += did.length; miles += mi; missed += miss.length;
+    sessions += did.length; miles += mi>=0.05 ? mi : 0; missed += miss.length;
     const dots = did.map(w=>`<i class="mc-dot" style="background:${w.fg}" title="${esc(w.name)}"></i>`).join("");
     const cls = ["mc-cell", did.length||mi ? "did" : "", miss.length && !did.length && !mi ? "miss" : "",
                  key===today ? "today" : "", future ? "future" : ""].filter(Boolean).join(" ");
@@ -64,7 +65,7 @@ function monthCalendar(){
       <span class="mc-n">${d}</span>
       ${miss.length && !did.length && !mi ? `<span class="mc-x">✕</span>` : ``}
       <div class="mc-dots">${dots}</div>
-      ${mi ? `<span class="mc-mi">${fmtMi(mi)}</span>` : ``}
+      ${mi>=0.05 ? `<span class="mc-mi">${fmtMi(mi)}</span>` : cardioFlOn(key) ? `<span class="mc-mi">${cardioFlOn(key)}F</span>` : ``}
       ${due.length && !did.length ? `<span class="mc-due" style="border-color:${due[0].fg}88"></span>` : ``}
     </div>`);
   }
@@ -86,7 +87,7 @@ function monthCalendar(){
     <div class="mc-grid">${cells.join("")}</div>
     <div class="mc-key">
       ${WK.map(w=>`<span><i style="background:${w.fg}"></i>${esc(w.name)}</span>`).join("")}
-      <span><i style="background:#b58cff"></i>Cardio (miles)</span>
+      <span><i style="background:#b58cff"></i>Cardio (M = miles, F = stair floors)</span>
       <span><em class="kx">✕</em>Missed</span>
     </div>
     ${streak>1 ? `<div class="mc-streak">🔥 ${streak} weeks in a row with every workout done</div>` : ``}
@@ -132,8 +133,8 @@ window.openWkDay = function(key){
     ${runs.map(c=>{ const t=CTYPE[c.type]||{i:"🏃",c:"#b58cff"};
       return `<div class="dd-card" style="border-color:${t.c}66" onclick="closeAll();openRun(${c.id})">
         <div class="dd-top"><span class="dd-ic" style="background:${t.c}22">${t.i}</span><b>${esc(c.type)}</b>
-        <span class="dd-sum" style="color:${t.c}">${fmtMi(c.mi)} · ${c.min} min</span></div>
-        <div class="dd-row"><span>Pace</span><em>${pace(c.mi,c.min)}</em></div></div>`; }).join("")}
+        <span class="dd-sum" style="color:${t.c}">${c.floors?c.floors+" floors":fmtMi(c.mi)} · ${c.min} min</span></div>
+        ${c.floors?"":`<div class="dd-row"><span>Pace</span><em>${pace(c.mi,c.min)}</em></div>`}</div>`; }).join("")}
     ${miss.map(w=>`<div class="dd-card miss"><div class="dd-top"><span class="dd-ic miss">✕</span>
         <b>${esc(w.name)}</b><span class="dd-sum">missed this week</span></div></div>`).join("")}
     ${due.length && !did.length ? `<div class="wk-note" style="padding:10px 0">Scheduled: ${due.map(w=>esc(w.name)).join(", ")}</div>` : ``}
@@ -189,15 +190,15 @@ function cardioGrid(){
   const rows=[]; let week=[], days=0, mi=0;
   for(let i=0;i<m0.getDay();i++) week.push(null);
   for(let d=1; d<=mEnd.getDate(); d++){
-    const key=ymd(new Date(m0.getFullYear(), m0.getMonth(), d)), m=cardioMiOn(key);
-    if(m){ days++; mi+=m; }
-    week.push({key,d,m,today:key===today});
+    const key=ymd(new Date(m0.getFullYear(), m0.getMonth(), d)), m=cardioMiOn(key), fl=cardioFlOn(key);
+    if(m||fl){ days++; mi+=m; }
+    week.push({key,d,m,fl,today:key===today});
     if(week.length===7){ rows.push(week); week=[]; }
   }
   if(week.length){ while(week.length<7) week.push(null); rows.push(week); }
   const cell = c => !c ? `<div class="wg-cell empty"></div>`
-    : `<div class="wg-cell ${c.m?"did":"off"}${c.today?" today":""}" ${c.m?`style="background:#b58cff;border-color:#b58cff;box-shadow:0 0 8px #b58cff55"`:""} onclick="openWkDay('${c.key}')">
-        ${c.m?`<span class="wg-mi">${fmtMi(c.m)}</span>`:`<span class="wg-n">${c.d}</span>`}</div>`;
+    : `<div class="wg-cell ${(c.m||c.fl)?"did":"off"}${c.today?" today":""}" ${c.m?`style="background:#b58cff;border-color:#b58cff;box-shadow:0 0 8px #b58cff55"`:c.fl?`style="background:#c99a2e;border-color:#ffcf5c;box-shadow:0 0 8px #ffcf5c55"`:""} onclick="openWkDay('${c.key}')">
+        ${c.m?`<span class="wg-mi">${fmtMi(c.m)}</span>`:c.fl?`<span class="wg-mi">${c.fl}F</span>`:`<span class="wg-n">${c.d}</span>`}</div>`;
   const weekMi = wk => { const n=wk.reduce((a,c)=>a+(c&&c.m||0),0); return n?`<span class="wtick part" style="color:#d4bfff">${fmtMi(n)}</span>`:`<span class="wtick"></span>`; };
   return {days, mi, html:`<div class="mgrid wg">
     <div class="mgrid-head"><span class="mg-month">${m0.toLocaleDateString(undefined,{month:"long"})}</span>

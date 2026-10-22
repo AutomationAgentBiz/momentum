@@ -743,7 +743,7 @@ function addToToday(id){
    Every write goes through save(). Storage is probed once and guarded, so if the
    browser won't allow it the app still runs exactly as before, in memory. */
 let STORE_OK=false, SAVE_KEY="momentum.v1", SCHEMA=2;
-const BUILD="v58 · Oct 22 · same spot after leaving, done moves highlighted, hold-and-drag order";   // shown in Settings and the menu — bump this every release
+const BUILD="v59 · Oct 22 · today's full workout checklist, treadmill + stairs";   // shown in Settings and the menu — bump this every release
 (function probe(){ try{ const k="__m"; window.localStorage.setItem(k,"1"); window.localStorage.removeItem(k); STORE_OK=true; }catch(e){ STORE_OK=false; } })();
 
 const SAVED=["tasks","nextId","PROJECTS","carryover","dayNote","missLog","WEBS","commitments",
@@ -3492,7 +3492,7 @@ async function healthTimeline(day){
   (meals.today||[]).filter(m=>m.t).forEach(m=>
     at(m.t,"🍽",`${m.n}`, `${m.kcal} cal · ${m.p}g protein${m.src==="ai-meal"?" · from a photo":""}`, "#ff9d4d"));
   cardio.filter(c=>c.d===day).forEach(c=>
-    at(`${day}T${String(12).padStart(2,"0")}:00:00`,"🏃",`${c.type} — ${c.mi} mi`,
+    at(`${day}T${String(12).padStart(2,"0")}:00:00`,(CTYPE[c.type]||{i:"🏃"}).i,`${c.type} — ${cdAmt(c)}`,
        `${c.min} min · ${pace(c.mi,c.min)}${c.hr?` · avg ${c.hr} bpm`:""}`, "#ff5f7e"));
   Object.entries(wkHist).forEach(([id,h])=>h.filter(x=>x.d===day).forEach(x=>{
     const w=wkById(id);
@@ -5375,10 +5375,13 @@ function deleteWorkout(){
 }
 
 /* ================= CARDIO ================= */
-const CTYPE={Jog:{i:"🏃",c:"#ff5f7e"},Run:{i:"⚡",c:"#ff9d4d"},Walk:{i:"🚶",c:"#2fd39a"},Bike:{i:"🚲",c:"#5b9dff"},Hike:{i:"🥾",c:"#a78bfa"}};
+const CTYPE={Jog:{i:"🏃",c:"#ff5f7e"},Run:{i:"⚡",c:"#ff9d4d"},Walk:{i:"🚶",c:"#2fd39a"},Bike:{i:"🚲",c:"#5b9dff"},Hike:{i:"🥾",c:"#a78bfa"},
+  Treadmill:{i:"🏃‍♂️",c:"#b58cff"},Stairs:{i:"🪜",c:"#ffcf5c"}};
 let cardio=[];
 let cid=20;
-const pace=(mi,min)=>{ if(!mi) return "—"; const p=min/mi; const m=Math.floor(p);
+/* v59: stairs are counted in floors, everything else in miles */
+const cdAmt=c=>(c&&c.floors)?`${c.floors} floor${c.floors==1?"":"s"}`:`${c?c.mi:0} mi`;
+const pace=(mi,min)=>{ if(!mi||!min) return "—"; const p=min/mi; const m=Math.floor(p);
   return m+":"+String(Math.round((p-m)*60)).padStart(2,"0")+" /mi"; };
 
 /* Miles this week against last week. One measure over two periods, so it's one
@@ -5441,8 +5444,8 @@ function renderCardio(){
   const jogs=sorted.filter(c=>c.type==="Jog"||c.type==="Run");
   const week=cardio.filter(c=>daysAgo(c)<7);
   const wkMi=week.reduce((a,c)=>a+c.mi,0);
-  const best=jogs.length?jogs.reduce((a,c)=>(c.min/c.mi)<(a.min/a.mi)?c:a):null;
-  const max=Math.max(...sorted.map(c=>c.mi),1);
+  const best=jogs.filter(c=>c.mi).length?jogs.filter(c=>c.mi).reduce((a,c)=>(c.min/c.mi)<(a.min/a.mi)?c:a):null;
+  const max=Math.max(...sorted.map(c=>c.mi||0),1);
 
   /* Order on purpose: your numbers first, then the checklists you open before
      and after, then logging at the bottom where you land once you're back. */
@@ -5452,8 +5455,8 @@ function renderCardio(){
       <div class="card-head"><span class="card-title">Distance · last ${sorted.length}</span><span class="link">Miles</span></div>
       <div class="chart" style="height:100px">${sorted.map(c=>{
         const col=CTYPE[c.type].c;
-        return `<div class="bar" title="${c.type} · ${c.mi} mi">
-          <div class="vv" style="color:${col}">${c.mi}</div>
+        return `<div class="bar" title="${c.type} · ${cdAmt(c)}">
+          <div class="vv" style="color:${col}">${c.floors?c.floors+"F":c.mi}</div>
           <i style="height:${Math.max(8,Math.round(c.mi/max*100))}%;background:linear-gradient(180deg,${col},${col}44)"></i>
           <em>${daysAgo(c)===0?"today":daysAgo(c)+"d"}</em></div>`;}).join("")}</div>
       <div class="wk-note" style="padding-top:12px">Taller bar = longer session.</div>
@@ -5468,7 +5471,7 @@ function renderCardio(){
       ${sorted.slice().reverse().map(c=>{const t=CTYPE[c.type];
         return `<div class="lg" style="cursor:pointer" onclick="openRun(${c.id})">
           <div class="icon" style="background:${t.c}22">${t.i}</div>
-          <div class="lm"><b>${c.type} · ${c.mi} mi${c.hr?` · ${c.hr} bpm`:``}${c.src==="watch"?` ⌚`:``}</b><span>${daysAgo(c)===0?"Today":daysAgo(c)===1?"Yesterday":daysAgo(c)+" days ago"} · ${c.min} min</span></div>
+          <div class="lm"><b>${c.type} · ${cdAmt(c)}${c.hr?` · ${c.hr} bpm`:``}${c.src==="watch"?` ⌚`:``}</b><span>${daysAgo(c)===0?"Today":daysAgo(c)===1?"Yesterday":daysAgo(c)+" days ago"} · ${c.min} min</span></div>
           <div class="lr"><b style="color:${t.c}">${pace(c.mi,c.min)}</b><span>Pace</span></div>
           <div class="lx" onclick="event.stopPropagation();delCardio(${c.id})">✕</div>
         </div>`;}).join("")}
@@ -5529,10 +5532,10 @@ function openRun(id){
     avg:Math.round(_hrData.reduce((a,b)=>a+b,0)/_hrData.length)}:null;
   $("nodeBody").innerHTML=`
     <div class="nlabel" style="color:${t.c};font-size:10px">${c.src==="watch"?"FROM YOUR WATCH":"LOGGED BY HAND"}</div>
-    <h2 style="font-size:19px">${t.i} ${esc(c.type)} · ${c.mi} mi</h2>
+    <h2 style="font-size:19px">${t.i} ${esc(c.type)} · ${cdAmt(c)}</h2>
     <div style="font-size:12px;color:var(--ink3);margin-top:3px">${agoLabel(daysAgo(c))}</div>
     <div class="sess-sum" style="padding:14px 0 4px">
-      <div class="ss"><b style="color:${t.c}">${c.mi}</b><span>Miles</span></div>
+      <div class="ss"><b style="color:${t.c}">${c.floors||c.mi}</b><span>${c.floors?"Floors":"Miles"}</span></div>
       <div class="ss"><b>${c.min}</b><span>Minutes</span></div>
       <div class="ss"><b style="font-size:14px">${pace(c.mi,c.min)}</b><span>Pace</span></div>
     </div>
