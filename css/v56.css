@@ -67,3 +67,17 @@ body:has(#testBanner) .toast{top:calc(38px + env(safe-area-inset-top));}
 .pp-row{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-top:8px;border-radius:13px;border:1px solid #2a3442;background:#141a24;cursor:pointer;}
 .pp-row b{flex:1;font-size:14px;}
 .pp-chk{width:24px;height:24px;border-radius:8px;border:1.5px solid #3a4658;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#04170f;}
+
+/* ---- v58: done moves, hold-to-drag ---- */
+#wkBody .ex{transition:background .2s ease, box-shadow .2s ease;border-radius:14px;}
+#wkBody .ex.exdone{background:linear-gradient(90deg,rgba(18,201,138,.13),rgba(18,201,138,.04));box-shadow:inset 4px 0 0 #12c98a;}
+#wkBody .ex.exdone .ex-n{color:#c9f5e4;}
+.donebadge{display:inline-flex;align-items:center;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:900;
+  letter-spacing:.04em;color:#04170f;background:#12c98a;vertical-align:middle;white-space:nowrap;}
+.rtab.rdone{border-color:#12c98a !important;color:#4fd6a5 !important;}
+.holdhint{padding:0 16px 6px;font-size:11px;font-weight:700;color:var(--ink3);}
+#wkBody .ex.holding{background:rgba(91,157,255,.08);}
+#wkBody .ex.dragging{position:relative;z-index:50;background:#1b2433;box-shadow:0 14px 34px rgba(0,0,0,.55),0 0 0 1.5px #5b9dff;
+  transition:none;opacity:.97;}
+body.dragmode, body.dragmode *{user-select:none;-webkit-user-select:none;}
+#wkBody .ex{-webkit-touch-callout:none;}
