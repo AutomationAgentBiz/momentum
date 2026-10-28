@@ -743,7 +743,7 @@ function addToToday(id){
    Every write goes through save(). Storage is probed once and guarded, so if the
    browser won't allow it the app still runs exactly as before, in memory. */
 let STORE_OK=false, SAVE_KEY="momentum.v1", SCHEMA=2;
-const BUILD="v62 · Oct 22 · one cardio logger, cardio on your week";   // shown in Settings and the menu — bump this every release
+const BUILD="v63 · Oct 28 · second schedule: the 4-day gym program";   // shown in Settings and the menu — bump this every release
 (function probe(){ try{ const k="__m"; window.localStorage.setItem(k,"1"); window.localStorage.removeItem(k); STORE_OK=true; }catch(e){ STORE_OK=false; } })();
 
 const SAVED=["tasks","nextId","PROJECTS","carryover","dayNote","missLog","WEBS","commitments",
