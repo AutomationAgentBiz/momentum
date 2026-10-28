@@ -193,3 +193,45 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.8;
 
 /* no floating + on Body pages — every row there has its own buttons */
 body.bodyview .plusfab{display:none !important;}
+
+/* ===== v63 — the program switcher and the gym plan notes ===== */
+.progcard{padding:10px;}
+.progsw{display:flex;gap:7px;}
+.progsw .pb{flex:1;min-width:0;padding:10px 11px;border-radius:12px;background:#161d27;
+            border:1px solid #2a3442;cursor:pointer;user-select:none;}
+.progsw .pb:active{transform:scale(.98);}
+.progsw .pb b{display:block;font-size:13px;font-weight:800;letter-spacing:-.01em;color:var(--ink2);}
+.progsw .pb span{display:block;font-size:10px;font-weight:700;color:var(--ink3);margin-top:3px;line-height:1.35;}
+.progsw .pb.on{background:linear-gradient(180deg,#24314a,#1b2433);border-color:#3d84ff;}
+.progsw .pb.on b{color:#fff;}
+.progsw .pb.on span{color:#93b4e8;}
+
+.gymrules{padding:0 16px 14px;}
+.gymrules > div{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line);}
+.gymrules > div:first-child{border-top:0;}
+.gymrules b{flex:none;width:84px;font-size:11px;font-weight:900;letter-spacing:.05em;
+            text-transform:uppercase;color:var(--ink3);padding-top:1px;}
+.gymrules span{flex:1;font-size:12.5px;line-height:1.5;color:var(--ink2);}
+.gymrules i{font-style:normal;font-weight:800;color:var(--ink);}
+.gymrules .warn b{color:#ff9d4d;}
+.gymrules .warn span{color:#ffc38a;}
+
+.gymtip{display:flex;align-items:center;gap:7px;margin-top:6px;flex-wrap:wrap;}
+.gymtip .setpill{flex:none;font-size:9px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;
+                 color:#9fb4d0;background:#1b2533;border-radius:5px;padding:3px 6px;}
+.gymtip .setpill.off{color:#4fd6a5;background:rgba(18,201,138,.14);}
+.gymtip span{flex:1;min-width:120px;font-size:10.5px;font-weight:700;color:var(--ink3);letter-spacing:.01em;}
+.gymtip a{flex:none;font-size:9.5px;font-weight:800;letter-spacing:.05em;
+          color:#6f7f93;text-decoration:none;border:1px solid #2a3442;
+          border-radius:6px;padding:3px 7px;}
+.gymtip a:active{background:#1e2734;color:#9fb4d0;}
+
+/* a move that's finished for the day — only 2 sets, and you're on round 3 */
+.ex.exdone{opacity:.42;}
+.ex.exdone .gymtip{opacity:1;}
+.ex.exdone .gymtip .setpill.off{opacity:1;}
+
+/* toasts were printing over the page title with the letters showing through */
+.toast{background:#141b26;border-color:#3a475e;}
+.rulescard .rulecar{display:inline-block;font-style:normal;margin-left:3px;transition:transform .16s;}
+.rulescard.open .rulecar{transform:rotate(180deg);}
